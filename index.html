@@ -340,18 +340,24 @@
             e?.preventDefault();
             const u = document.getElementById('username').value, p = document.getElementById('password').value;
             showLoad();
-            const { data, error } = await supabase.from('users').select('*').eq('username', u).eq('password', p).single();
+            
+            const { data, error } = await supabase.from('users').select('*').eq('username', u).eq('password', p).limit(1);
             hideLoad();
             
-            if (data) { 
-                currentUser = data; 
-                sessionStorage.setItem('cp_user', JSON.stringify(data)); 
-                toast(`Welcome, ${data.username}!`); 
-                logActivity('Login', `User ${data.username} masuk ke sistem`);
+            if (error) {
+                toast('Error DB: ' + error.message, false);
+                console.error(error);
+                return;
+            }
+
+            if (data && data.length > 0) { 
+                currentUser = data[0]; 
+                sessionStorage.setItem('cp_user', JSON.stringify(currentUser)); 
+                toast(`Welcome, ${currentUser.username}!`); 
+                logActivity('Login', `User ${currentUser.username} masuk ke sistem`);
                 initApp(); 
             } else {
-                toast('Username atau password salah / Database belum konek!', false);
-                console.error(error);
+                toast('Username atau password salah!', false);
             }
         }
 
@@ -461,7 +467,6 @@
             document.querySelectorAll('.dashDateText').forEach(el => el.innerText = formatDateIndo(dateStr));
             initCharts(cTrx, cRev, cProf);
 
-            // Populate Activity Logs
             const logBox = document.getElementById('activityLogContainer');
             if(logs && logs.length > 0) {
                 logBox.innerHTML = logs.map(l => `<div class="flex flex-col border-b border-gray-50 pb-2"><span class="text-[10px] text-gray-400">${new Date(l.created_at).toLocaleTimeString('id-ID')} - ${l.username}</span><span class="text-sm text-gray-700 font-medium">${l.description}</span></div>`).join('');
