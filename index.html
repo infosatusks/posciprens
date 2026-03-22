@@ -292,7 +292,7 @@
         // Key wajib diawali dengan tulisan 'eyJ...' BUKAN 'sb_publishable_...'
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Ind6aHl4YXpqbHFwdm5jaWdnZmxmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQxOTYxNTgsImV4cCI6MjA4OTc3MjE1OH0.yWdyV1haAjNZT-_jeR21qp4KIK2ZgCpzh9BR_GpxTT0';
         
-        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+        const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
         // STATE
         let currentUser = null; let allProducts = []; let allCustomers = []; let allPromos = []; let posRows = 0; let html5QrcodeScanner = null; let activeScannerTarget = '';
@@ -333,7 +333,7 @@
 
         async function logActivity(action, desc) {
             if(!currentUser) return;
-            await supabase.from('activity_logs').insert([{ user_id: currentUser.id, username: currentUser.username, action: action, description: desc }]);
+            await db.from('activity_logs').insert([{ user_id: currentUser.id, username: currentUser.username, action: action, description: desc }]);
         }
 
         async function handleLogin(e) {
@@ -341,7 +341,7 @@
             const u = document.getElementById('username').value, p = document.getElementById('password').value;
             showLoad();
             
-            const { data, error } = await supabase.from('users').select('*').eq('username', u).eq('password', p).limit(1);
+            const { data, error } = await db.from('users').select('*').eq('username', u).eq('password', p).limit(1);
             hideLoad();
             
             if (error) {
@@ -387,9 +387,9 @@
         }
 
         async function fetchMasterData() {
-            const resP = await supabase.from('products').select('*'); if(resP.data) allProducts = resP.data;
-            const resC = await supabase.from('customers').select('*'); if(resC.data) allCustomers = resC.data;
-            const resPr = await supabase.from('promos').select('*'); if(resPr.data) allPromos = resPr.data;
+            const resP = await db.from('products').select('*'); if(resP.data) allProducts = resP.data;
+            const resC = await db.from('customers').select('*'); if(resC.data) allCustomers = resC.data;
+            const resPr = await db.from('promos').select('*'); if(resPr.data) allPromos = resPr.data;
             
             document.querySelectorAll('.pos-select').forEach(sel => { const c = sel.value; sel.innerHTML = getProductOptionsHtml(); sel.value = c; });
             const selCust = document.getElementById('posBuyer');
@@ -436,9 +436,9 @@
         async function loadDashboard() {
             showLoad();
             const dateStr = document.getElementById('dashDate').value;
-            const {data: sales} = await supabase.from('sales').select('*').eq('date', dateStr);
-            const {data: details} = await supabase.from('sales_details').select('*');
-            const {data: logs} = await supabase.from('activity_logs').select('*').order('created_at', {ascending: false}).limit(10);
+            const {data: sales} = await db.from('sales').select('*').eq('date', dateStr);
+            const {data: details} = await db.from('sales_details').select('*');
+            const {data: logs} = await db.from('activity_logs').select('*').order('created_at', {ascending: false}).limit(10);
             hideLoad();
 
             let tInv=0, tRev=0, tProf=0;
@@ -477,27 +477,27 @@
 
         // USERS
         function openUserModal(){ document.getElementById('formUser').reset(); document.getElementById('userId').value=''; openModal('modalUser'); }
-        async function loadUsers(){ showLoad(); const {data} = await supabase.from('users').select('*'); hideLoad(); if(data) document.getElementById('userTableBody').innerHTML = data.map(u => `<tr><td class="p-4 font-bold text-gray-800">${u.username}</td><td class="p-4"><span class="px-2 py-1 rounded text-xs font-bold ${u.role==='Admin'?'bg-red-50 text-primary':'bg-gray-100 text-gray-600'}">${u.role}</span></td><td class="p-4 text-center"><button onclick="deleteData('users','${u.id}',loadUsers)" class="text-red-400 hover:text-primary"><i class="fas fa-trash"></i></button></td></tr>`).join(''); }
-        async function saveUser(e){ e.preventDefault(); showLoad(); const id=document.getElementById('userId').value; const p={username:document.getElementById('userUname').value, password:document.getElementById('userPass').value, role:document.getElementById('userRole').value}; let res; if(id) res=await supabase.from('users').update(p).eq('id',id); else res=await supabase.from('users').insert([p]); hideLoad(); if(!res.error){ toast('User tersimpan'); closeModal('modalUser'); loadUsers(); logActivity('System',`Menambah/Update user ${p.username}`);} else toast(res.error.message,false); }
+        async function loadUsers(){ showLoad(); const {data} = await db.from('users').select('*'); hideLoad(); if(data) document.getElementById('userTableBody').innerHTML = data.map(u => `<tr><td class="p-4 font-bold text-gray-800">${u.username}</td><td class="p-4"><span class="px-2 py-1 rounded text-xs font-bold ${u.role==='Admin'?'bg-red-50 text-primary':'bg-gray-100 text-gray-600'}">${u.role}</span></td><td class="p-4 text-center"><button onclick="deleteData('users','${u.id}',loadUsers)" class="text-red-400 hover:text-primary"><i class="fas fa-trash"></i></button></td></tr>`).join(''); }
+        async function saveUser(e){ e.preventDefault(); showLoad(); const id=document.getElementById('userId').value; const p={username:document.getElementById('userUname').value, password:document.getElementById('userPass').value, role:document.getElementById('userRole').value}; let res; if(id) res=await db.from('users').update(p).eq('id',id); else res=await db.from('users').insert([p]); hideLoad(); if(!res.error){ toast('User tersimpan'); closeModal('modalUser'); loadUsers(); logActivity('System',`Menambah/Update user ${p.username}`);} else toast(res.error.message,false); }
 
         // PRODUCTS
         function openProductModal(){ document.getElementById('formProduct').reset(); document.getElementById('prodId').value=''; document.getElementById('prodExistingImage').value=''; document.getElementById('prodPreview').classList.add('hidden'); openModal('modalProduct'); }
         function previewImage(e){ const f=e.target.files[0]; if(f){const r=new FileReader(); r.onload=x=>{document.getElementById('prodPreview').src=x.target.result; document.getElementById('prodPreview').classList.remove('hidden'); document.getElementById('prodPreview').setAttribute('data-base64',x.target.result);}; r.readAsDataURL(f);} }
-        async function loadProducts(){ showLoad(); const {data} = await supabase.from('products').select('*'); hideLoad(); if(data) document.getElementById('productTableBody').innerHTML = data.map(p => `<tr><td class="p-4">${p.image_url?`<img src="${p.image_url}" class="w-10 h-10 object-cover rounded shadow">`:'-'}</td><td class="p-4 font-bold">${p.name}<br><span class="text-xs font-normal text-gray-400">${p.barcode||'-'}</span></td><td class="p-4 text-gray-600">${p.category}</td><td class="p-4 font-black ${p.qty<5?'text-primary':''}">${p.qty}</td><td class="p-4 text-gray-500">${formatRp(p.capital_price)}</td><td class="p-4 text-green-600 font-bold">${formatRp(p.selling_price)}</td><td class="p-4 text-center"><button onclick="deleteData('products','${p.id}',loadProducts)" class="text-red-400 hover:text-primary"><i class="fas fa-trash"></i></button></td></tr>`).join(''); }
-        async function saveProduct(e){ e.preventDefault(); showLoad(); const id=document.getElementById('prodId').value; const base64=document.getElementById('prodPreview').getAttribute('data-base64'); let imgUrl = document.getElementById('prodExistingImage').value; if(base64) imgUrl=base64; const p={name:document.getElementById('prodName').value, category:document.getElementById('prodCat').value, barcode:document.getElementById('prodBarcode').value, qty:document.getElementById('prodQty').value, capital_price:document.getElementById('prodModal').value, selling_price:document.getElementById('prodJual').value, image_url:imgUrl}; let res; if(id) res=await supabase.from('products').update(p).eq('id',id); else res=await supabase.from('products').insert([p]); hideLoad(); if(!res.error){ toast('Produk tersimpan'); closeModal('modalProduct'); refreshApp(); logActivity('Master',`Menyimpan produk ${p.name}`);} else toast(res.error.message,false); }
+        async function loadProducts(){ showLoad(); const {data} = await db.from('products').select('*'); hideLoad(); if(data) document.getElementById('productTableBody').innerHTML = data.map(p => `<tr><td class="p-4">${p.image_url?`<img src="${p.image_url}" class="w-10 h-10 object-cover rounded shadow">`:'-'}</td><td class="p-4 font-bold">${p.name}<br><span class="text-xs font-normal text-gray-400">${p.barcode||'-'}</span></td><td class="p-4 text-gray-600">${p.category}</td><td class="p-4 font-black ${p.qty<5?'text-primary':''}">${p.qty}</td><td class="p-4 text-gray-500">${formatRp(p.capital_price)}</td><td class="p-4 text-green-600 font-bold">${formatRp(p.selling_price)}</td><td class="p-4 text-center"><button onclick="deleteData('products','${p.id}',loadProducts)" class="text-red-400 hover:text-primary"><i class="fas fa-trash"></i></button></td></tr>`).join(''); }
+        async function saveProduct(e){ e.preventDefault(); showLoad(); const id=document.getElementById('prodId').value; const base64=document.getElementById('prodPreview').getAttribute('data-base64'); let imgUrl = document.getElementById('prodExistingImage').value; if(base64) imgUrl=base64; const p={name:document.getElementById('prodName').value, category:document.getElementById('prodCat').value, barcode:document.getElementById('prodBarcode').value, qty:document.getElementById('prodQty').value, capital_price:document.getElementById('prodModal').value, selling_price:document.getElementById('prodJual').value, image_url:imgUrl}; let res; if(id) res=await db.from('products').update(p).eq('id',id); else res=await db.from('products').insert([p]); hideLoad(); if(!res.error){ toast('Produk tersimpan'); closeModal('modalProduct'); refreshApp(); logActivity('Master',`Menyimpan produk ${p.name}`);} else toast(res.error.message,false); }
 
         // CUSTOMERS
         function openCustomerModal(){ document.getElementById('formCustomer').reset(); document.getElementById('custId').value=''; openModal('modalCustomer'); }
-        async function loadCustomers(){ showLoad(); const {data} = await supabase.from('customers').select('*'); hideLoad(); if(data) document.getElementById('customerTableBody').innerHTML = data.map(c => `<tr><td class="p-4 font-bold">${c.name}</td><td class="p-4">${c.phone||'-'}</td><td class="p-4">${c.address||'-'}</td><td class="p-4 text-center font-bold text-primary">${c.points}</td><td class="p-4 text-center"><button onclick="deleteData('customers','${c.id}',loadCustomers)" class="text-red-400 hover:text-primary"><i class="fas fa-trash"></i></button></td></tr>`).join(''); }
-        async function saveCustomer(e){ e.preventDefault(); showLoad(); const id=document.getElementById('custId').value; const p={name:document.getElementById('custName').value, phone:document.getElementById('custPhone').value, address:document.getElementById('custAddr').value}; let res; if(id) res=await supabase.from('customers').update(p).eq('id',id); else res=await supabase.from('customers').insert([p]); hideLoad(); if(!res.error){ toast('Pelanggan tersimpan'); closeModal('modalCustomer'); refreshApp(); logActivity('Master',`Menyimpan pelanggan ${p.name}`);} else toast(res.error.message,false); }
+        async function loadCustomers(){ showLoad(); const {data} = await db.from('customers').select('*'); hideLoad(); if(data) document.getElementById('customerTableBody').innerHTML = data.map(c => `<tr><td class="p-4 font-bold">${c.name}</td><td class="p-4">${c.phone||'-'}</td><td class="p-4">${c.address||'-'}</td><td class="p-4 text-center font-bold text-primary">${c.points}</td><td class="p-4 text-center"><button onclick="deleteData('customers','${c.id}',loadCustomers)" class="text-red-400 hover:text-primary"><i class="fas fa-trash"></i></button></td></tr>`).join(''); }
+        async function saveCustomer(e){ e.preventDefault(); showLoad(); const id=document.getElementById('custId').value; const p={name:document.getElementById('custName').value, phone:document.getElementById('custPhone').value, address:document.getElementById('custAddr').value}; let res; if(id) res=await db.from('customers').update(p).eq('id',id); else res=await db.from('customers').insert([p]); hideLoad(); if(!res.error){ toast('Pelanggan tersimpan'); closeModal('modalCustomer'); refreshApp(); logActivity('Master',`Menyimpan pelanggan ${p.name}`);} else toast(res.error.message,false); }
 
         // PROMOS
         function openPromoModal(){ document.getElementById('formPromo').reset(); document.getElementById('promoId').value=''; togglePromoType(); openModal('modalPromo'); }
         function togglePromoType() { const t=document.getElementById('promoType').value; if(t==='nominal'){document.getElementById('promoTargetNominalWrap').classList.remove('hidden'); document.getElementById('promoTargetProdukWrap').classList.add('hidden');}else{document.getElementById('promoTargetNominalWrap').classList.add('hidden'); document.getElementById('promoTargetProdukWrap').classList.remove('hidden');} }
-        async function loadPromos(){ showLoad(); const {data} = await supabase.from('promos').select('*'); hideLoad(); if(data) document.getElementById('promoTableBody').innerHTML = data.map(p => { let tv=p.type==='nominal'?formatRp(p.target_value):allProducts.find(x=>x.id===p.target_value)?.name||p.target_value; return `<tr><td class="p-4 font-bold">${p.name}</td><td class="p-4 uppercase text-xs">${p.type}</td><td class="p-4 text-blue-600 font-semibold">${tv}</td><td class="p-4 text-center font-bold text-primary">+${p.reward_points} Poin</td><td class="p-4 text-center">${p.is_active?'<span class="text-green-500 font-bold">Aktif</span>':'<span class="text-red-500">Nonaktif</span>'}</td><td class="p-4 text-center"><button onclick="deleteData('promos','${p.id}',loadPromos)" class="text-red-400 hover:text-primary"><i class="fas fa-trash"></i></button></td></tr>`}).join(''); }
-        async function savePromo(e){ e.preventDefault(); showLoad(); const id=document.getElementById('promoId').value; const t=document.getElementById('promoType').value; const p={name:document.getElementById('promoName').value, type:t, target_value:t==='nominal'?document.getElementById('promoTargetNominal').value:document.getElementById('promoTargetProduk').value, reward_points:document.getElementById('promoReward').value}; let res; if(id) res=await supabase.from('promos').update(p).eq('id',id); else res=await supabase.from('promos').insert([p]); hideLoad(); if(!res.error){ toast('Promo tersimpan'); closeModal('modalPromo'); refreshApp(); logActivity('Master',`Menyimpan promo ${p.name}`);} else toast(res.error.message,false); }
+        async function loadPromos(){ showLoad(); const {data} = await db.from('promos').select('*'); hideLoad(); if(data) document.getElementById('promoTableBody').innerHTML = data.map(p => { let tv=p.type==='nominal'?formatRp(p.target_value):allProducts.find(x=>x.id===p.target_value)?.name||p.target_value; return `<tr><td class="p-4 font-bold">${p.name}</td><td class="p-4 uppercase text-xs">${p.type}</td><td class="p-4 text-blue-600 font-semibold">${tv}</td><td class="p-4 text-center font-bold text-primary">+${p.reward_points} Poin</td><td class="p-4 text-center">${p.is_active?'<span class="text-green-500 font-bold">Aktif</span>':'<span class="text-red-500">Nonaktif</span>'}</td><td class="p-4 text-center"><button onclick="deleteData('promos','${p.id}',loadPromos)" class="text-red-400 hover:text-primary"><i class="fas fa-trash"></i></button></td></tr>`}).join(''); }
+        async function savePromo(e){ e.preventDefault(); showLoad(); const id=document.getElementById('promoId').value; const t=document.getElementById('promoType').value; const p={name:document.getElementById('promoName').value, type:t, target_value:t==='nominal'?document.getElementById('promoTargetNominal').value:document.getElementById('promoTargetProduk').value, reward_points:document.getElementById('promoReward').value}; let res; if(id) res=await db.from('promos').update(p).eq('id',id); else res=await db.from('promos').insert([p]); hideLoad(); if(!res.error){ toast('Promo tersimpan'); closeModal('modalPromo'); refreshApp(); logActivity('Master',`Menyimpan promo ${p.name}`);} else toast(res.error.message,false); }
 
-        async function deleteData(table, id, cb) { if(confirm('Warning: Data dihapus permanen. Lanjut?')){ showLoad(); await supabase.from(table).delete().eq('id',id); hideLoad(); toast('Terhapus',true); logActivity('System',`Hapus data dari ${table}`); cb(); } }
+        async function deleteData(table, id, cb) { if(confirm('Warning: Data dihapus permanen. Lanjut?')){ showLoad(); await db.from(table).delete().eq('id',id); hideLoad(); toast('Terhapus',true); logActivity('System',`Hapus data dari ${table}`); cb(); } }
 
         // SCANNER REUSABLE
         function openScanner(targetId) { activeScannerTarget=targetId; document.getElementById('modalScanner').style.display='flex'; html5QrcodeScanner=new Html5QrcodeScanner("reader",{fps:10,qrbox:{width:250,height:250}},false); html5QrcodeScanner.render(txt=>{ closeScanner(); document.getElementById(activeScannerTarget).value=txt; if(activeScannerTarget==='posBarcode')handleBarcodeEnter({key:'Enter',target:document.getElementById('posBarcode')}); }); }
@@ -522,13 +522,13 @@
             const py = {id:'INV-'+new Date().getTime(), date:document.getElementById('posDate').value, customer_id:custId||null, buyer_name:bName, total_nominal:tNominal, discount:document.getElementById('posDiscount').value, cashier:currentUser.username, total_payment:parseInt(document.getElementById('posTotalPayment').innerText.replace(/\D/g,''))||0};
             
             showLoad();
-            const resSale = await supabase.from('sales').insert([py]);
+            const resSale = await db.from('sales').insert([py]);
             if(resSale.error) { hideLoad(); return toast(resSale.error.message, false); }
             
             const details = itm.map(i => ({sale_id:py.id, product_id:i.product_id, product_name:i.product_name, qty:i.qty, capital_price:i.capital_price, selling_price:i.selling_price, subtotal:i.subtotal}));
-            await supabase.from('sales_details').insert(details);
+            await db.from('sales_details').insert(details);
             
-            for(let i of itm) { const p=allProducts.find(x=>x.id===i.product_id); if(p) await supabase.from('products').update({qty: p.qty-i.qty}).eq('id',p.id); }
+            for(let i of itm) { const p=allProducts.find(x=>x.id===i.product_id); if(p) await db.from('products').update({qty: p.qty-i.qty}).eq('id',p.id); }
 
             let gotPoints = 0;
             if(custId) {
@@ -542,7 +542,7 @@
                 }
                 if(gotPoints > 0) {
                     const cust = allCustomers.find(c=>c.id===custId);
-                    await supabase.from('customers').update({points: cust.points + gotPoints}).eq('id', custId);
+                    await db.from('customers').update({points: cust.points + gotPoints}).eq('id', custId);
                     toast(`Pelanggan mendapat ${gotPoints} Poin!`);
                 }
             }
@@ -566,22 +566,22 @@
 
         // STOCK & EXPENSE
         function filterStkProducts(){ const c=document.getElementById('stkCat').value, s=document.getElementById('stkProduct'); s.innerHTML='<option value="">Pilih Produk...</option>'; if(c){s.disabled=false;allProducts.filter(p=>p.category===c).forEach(p=>s.innerHTML+=`<option value="${p.id}">${p.name} (Sisa: ${p.qty})</option>`);}else s.disabled=true; }
-        async function saveStockIn(e){ e.preventDefault(); const p=document.getElementById('stkProduct'); if(!p.value)return; showLoad(); const q=parseInt(document.getElementById('stkQty').value); await supabase.from('stock_in').insert([{date:document.getElementById('stkDate').value, category:document.getElementById('stkCat').value, product_id:p.value, product_name:p.options[p.selectedIndex].text.split(' (')[0], qty_added:q, admin:currentUser.username}]); const prod=allProducts.find(x=>x.id===p.value); await supabase.from('products').update({qty:prod.qty+q}).eq('id',p.value); hideLoad(); toast('Stok ditambah'); e.target.reset(); filterStkProducts(); logActivity('Inventory',`Tambah stok ${prod.name} +${q}`); refreshApp(); }
+        async function saveStockIn(e){ e.preventDefault(); const p=document.getElementById('stkProduct'); if(!p.value)return; showLoad(); const q=parseInt(document.getElementById('stkQty').value); await db.from('stock_in').insert([{date:document.getElementById('stkDate').value, category:document.getElementById('stkCat').value, product_id:p.value, product_name:p.options[p.selectedIndex].text.split(' (')[0], qty_added:q, admin:currentUser.username}]); const prod=allProducts.find(x=>x.id===p.value); await db.from('products').update({qty:prod.qty+q}).eq('id',p.value); hideLoad(); toast('Stok ditambah'); e.target.reset(); filterStkProducts(); logActivity('Inventory',`Tambah stok ${prod.name} +${q}`); refreshApp(); }
         function checkExpLainnya(){ document.getElementById('expCatLainnya').style.display=document.getElementById('expCat').value==='Lainnya'?'block':'none'; }
         function calcExp(){ document.getElementById('expTotal').value=formatRp((parseInt(document.getElementById('expQty').value)||0)*(parseInt(document.getElementById('expNominal').value)||0)); }
-        async function saveExpense(e){ e.preventDefault(); const c=document.getElementById('expCat').value==='Lainnya'?document.getElementById('expCatLainnya').value:document.getElementById('expCat').value; showLoad(); await supabase.from('expenses').insert([{date:document.getElementById('expDate').value, category:c, vendor:document.getElementById('expVendor').value, qty:document.getElementById('expQty').value, nominal:document.getElementById('expNominal').value, total:document.getElementById('expTotal').value.replace(/\D/g,''), admin:currentUser.username}]); hideLoad(); toast('Pengeluaran dicatat'); e.target.reset(); calcExp(); checkExpLainnya(); logActivity('Finance',`Pengeluaran ${c} dicatat`); }
+        async function saveExpense(e){ e.preventDefault(); const c=document.getElementById('expCat').value==='Lainnya'?document.getElementById('expCatLainnya').value:document.getElementById('expCat').value; showLoad(); await db.from('expenses').insert([{date:document.getElementById('expDate').value, category:c, vendor:document.getElementById('expVendor').value, qty:document.getElementById('expQty').value, nominal:document.getElementById('expNominal').value, total:document.getElementById('expTotal').value.replace(/\D/g,''), admin:currentUser.username}]); hideLoad(); toast('Pengeluaran dicatat'); e.target.reset(); calcExp(); checkExpLainnya(); logActivity('Finance',`Pengeluaran ${c} dicatat`); }
         
         // REPORTS
-        async function loadSales(){ showLoad(); const start=document.getElementById('filterSaleStart').value, end=document.getElementById('filterSaleEnd').value; const {data} = await supabase.from('sales').select('*').gte('date',start).lte('date',end); hideLoad(); if(data) document.getElementById('repSalesBody').innerHTML=data.map(s=>`<tr><td class="p-4 font-mono text-xs text-gray-500">${s.id}</td><td class="p-4 font-medium text-gray-700">${s.date}</td><td class="p-4 font-bold text-gray-800">${s.buyer_name}</td><td class="p-4 text-gray-500">${formatRp(s.total_nominal)}</td><td class="p-4">${s.discount}</td><td class="p-4 font-black text-green-600">${formatRp(s.total_payment)}</td></tr>`).join(''); }
-        async function loadFinance(){ showLoad(); const start=document.getElementById('filterFinStart').value, end=document.getElementById('filterFinEnd').value; const {data:s} = await supabase.from('sales').select('total_payment').gte('date',start).lte('date',end); const {data:e} = await supabase.from('expenses').select('*').gte('date',start).lte('date',end); hideLoad(); let ti=0,to=0; if(s) s.forEach(x=>ti+=parseInt(x.total_payment)||0); if(e) e.forEach(x=>to+=parseInt(x.total)||0); document.getElementById('finIn').innerText=formatRp(ti); document.getElementById('finOut').innerText=formatRp(to); document.getElementById('finNet').innerText=formatRp(ti-to); if(e) document.getElementById('repFinBody').innerHTML=e.map(x=>`<tr><td class="p-4 font-medium text-gray-700">${x.date}</td><td class="p-4 text-gray-600">${x.category}</td><td class="p-4 font-bold text-gray-800">${x.vendor}</td><td class="p-4 font-black text-red-500">${formatRp(x.total)}</td></tr>`).join(''); }
+        async function loadSales(){ showLoad(); const start=document.getElementById('filterSaleStart').value, end=document.getElementById('filterSaleEnd').value; const {data} = await db.from('sales').select('*').gte('date',start).lte('date',end); hideLoad(); if(data) document.getElementById('repSalesBody').innerHTML=data.map(s=>`<tr><td class="p-4 font-mono text-xs text-gray-500">${s.id}</td><td class="p-4 font-medium text-gray-700">${s.date}</td><td class="p-4 font-bold text-gray-800">${s.buyer_name}</td><td class="p-4 text-gray-500">${formatRp(s.total_nominal)}</td><td class="p-4">${s.discount}</td><td class="p-4 font-black text-green-600">${formatRp(s.total_payment)}</td></tr>`).join(''); }
+        async function loadFinance(){ showLoad(); const start=document.getElementById('filterFinStart').value, end=document.getElementById('filterFinEnd').value; const {data:s} = await db.from('sales').select('total_payment').gte('date',start).lte('date',end); const {data:e} = await db.from('expenses').select('*').gte('date',start).lte('date',end); hideLoad(); let ti=0,to=0; if(s) s.forEach(x=>ti+=parseInt(x.total_payment)||0); if(e) e.forEach(x=>to+=parseInt(x.total)||0); document.getElementById('finIn').innerText=formatRp(ti); document.getElementById('finOut').innerText=formatRp(to); document.getElementById('finNet').innerText=formatRp(ti-to); if(e) document.getElementById('repFinBody').innerHTML=e.map(x=>`<tr><td class="p-4 font-medium text-gray-700">${x.date}</td><td class="p-4 text-gray-600">${x.category}</td><td class="p-4 font-bold text-gray-800">${x.vendor}</td><td class="p-4 font-black text-red-500">${formatRp(x.total)}</td></tr>`).join(''); }
         
         async function loadSalesSummary() {
             showLoad();
             const start=document.getElementById('sumDateStart').value, end=document.getElementById('sumDateEnd').value;
-            const {data: sales} = await supabase.from('sales').select('id').gte('date',start).lte('date',end);
+            const {data: sales} = await db.from('sales').select('id').gte('date',start).lte('date',end);
             if(!sales) { hideLoad(); return; }
             const saleIds = sales.map(x=>x.id);
-            const {data: details} = await supabase.from('sales_details').select('*');
+            const {data: details} = await db.from('sales_details').select('*');
             hideLoad();
             
             let map = {};
