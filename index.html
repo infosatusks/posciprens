@@ -1,0 +1,611 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cilegon Petshop - POS</title>
+    <link rel="icon" href="logo.jpg" type="image/jpeg">
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: { 
+                extend: { 
+                    colors: { 
+                        primary: '#d90429', 
+                        primaryDark: '#9b2226', 
+                        primaryLight: '#ef233c', 
+                        accent: '#2b2d42',
+                        background: '#f8f9fa'
+                    } 
+                } 
+            }
+        }
+    </script>
+    <!-- FontAwesome & ChartJS & HTML5 QRCode & Supabase SDK -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://unpkg.com/html5-qrcode"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+    <style>
+        .paw-loader { width: 80px; height: 80px; position: relative; animation: pulse 1.5s infinite; color: #d90429; font-size: 80px; }
+        @keyframes pulse { 0% { transform: scale(0.9); opacity: 0.7; } 50% { transform: scale(1.1); opacity: 1; } 100% { transform: scale(0.9); opacity: 0.7; } }
+        .toast-slide-up { animation: slideUp 0.3s ease-out forwards; }
+        @keyframes slideUp { from { transform: translate(-50%, 100%); opacity: 0; } to { transform: translate(-50%, 0); opacity: 1; } }
+        
+        /* CSS Print Struk Kasir */
+        @media print {
+            body.print-struk-mode * { visibility: hidden; }
+            body.print-struk-mode #print-area, body.print-struk-mode #print-area * { visibility: visible; }
+            body.print-struk-mode #print-area { position: absolute; left: 0; top: 0; width: 100%; max-width: 80mm; font-size: 12px; margin: 0; padding: 10px; background: white; z-index: 9999; }
+            body.print-struk-mode #print-area table th, body.print-struk-mode #print-area table td { border: none; padding: 2px 0; }
+        }
+
+        /* CSS Print Ringkasan Penjualan */
+        @media print {
+            body.print-summary-mode * { visibility: hidden; }
+            body.print-summary-mode #view-ringkasanPenjualan, body.print-summary-mode #view-ringkasanPenjualan * { visibility: visible; }
+            body.print-summary-mode #view-ringkasanPenjualan { position: absolute; left: 0; top: 0; width: 100%; }
+            body.print-summary-mode .no-print { display: none !important; }
+        }
+        
+        .scroll-hidden::-webkit-scrollbar { display: none; }
+        .menu-collapsible { overflow: hidden; transition: max-height 0.3s ease-out; max-height: 0; }
+        .menu-collapsible.open { max-height: 800px; }
+        .login-bg { background: linear-gradient(135deg, #f8f9fa 50%, #ffe5e5 50%); }
+    </style>
+</head>
+<body class="bg-background font-sans text-gray-800">
+
+    <!-- Loading Overlay -->
+    <div id="loadingOverlay" class="fixed inset-0 bg-white/80 z-[100] hidden justify-center items-center backdrop-blur-sm">
+        <div class="flex flex-col items-center"><i class="fas fa-paw paw-loader text-primary"></i><p class="mt-4 text-primary font-bold animate-pulse">Memproses Data...</p></div>
+    </div>
+    <!-- Toast Container -->
+    <div id="toastContainer" class="fixed bottom-6 left-1/2 -translate-x-1/2 z-[100] flex flex-col gap-2 pointer-events-none"></div>
+
+    <!-- LOGIN SCREEN -->
+    <div id="loginScreen" class="min-h-screen flex items-center justify-center login-bg absolute inset-0 z-50 p-4">
+        <div class="bg-white rounded-3xl shadow-2xl flex flex-col md:flex-row w-full max-w-4xl overflow-hidden border border-gray-100">
+            <div class="w-full md:w-1/2 bg-red-50 p-10 flex flex-col justify-center items-center relative overflow-hidden">
+                <div class="absolute top-0 right-0 w-32 h-32 bg-primary rounded-bl-full opacity-20"></div>
+                <div class="absolute bottom-0 left-0 w-24 h-24 bg-primary rounded-tr-full opacity-20"></div>
+                <div class="z-10 text-center">
+                    <img src="logo.jpg" alt="Logo" class="w-32 h-32 mx-auto rounded-full object-cover border-4 border-white shadow-lg mb-6" onerror="this.src='https://ui-avatars.com/api/?name=Cilegon+Petshop&background=d90429&color=fff'">
+                    <h1 class="text-3xl font-extrabold text-primary mb-2">Cilegon Petshop</h1>
+                    <p class="text-gray-600">Point of Sale System</p>
+                </div>
+            </div>
+            <div class="w-full md:w-1/2 p-8 md:p-12 flex flex-col justify-center bg-white">
+                <h2 class="text-2xl font-bold mb-6 text-gray-800">Sign In</h2>
+                <form onsubmit="handleLogin(event)">
+                    <div class="mb-4">
+                        <label class="block text-xs font-semibold text-gray-500 mb-1 uppercase tracking-wider">Username</label>
+                        <input type="text" id="username" class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:border-primary focus:bg-white transition" required>
+                    </div>
+                    <div class="mb-6">
+                        <label class="block text-xs font-semibold text-gray-500 mb-1 uppercase tracking-wider">Password</label>
+                        <input type="password" id="password" class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:border-primary focus:bg-white transition" required>
+                    </div>
+                    <div class="flex flex-col gap-4">
+                        <button type="submit" class="w-full bg-primary hover:bg-primaryDark text-white font-bold py-3 px-6 rounded-xl transition-colors shadow-md shadow-red-200">Sign In</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- MAIN APP SCREEN -->
+    <div id="mainApp" class="hidden h-screen flex overflow-hidden">
+        
+        <!-- Sidebar -->
+        <aside id="sidebar" class="bg-white w-72 h-full shadow-[4px_0_24px_rgba(0,0,0,0.05)] flex-shrink-0 transition-transform duration-300 transform -translate-x-full fixed md:relative md:translate-x-0 md:flex z-50 flex flex-col border-r border-gray-100">
+            <div class="p-6 relative border-b border-gray-100 bg-white">
+                <button onclick="toggleSidebar()" class="md:hidden absolute top-6 right-4 text-gray-500 text-xl"><i class="fas fa-times"></i></button>
+                <div class="flex items-center gap-3">
+                    <img src="logo.jpg" class="w-12 h-12 rounded-xl object-cover border border-gray-200 shadow-sm" onerror="this.src='https://ui-avatars.com/api/?name=CP&background=d90429&color=fff'">
+                    <div><h2 class="font-bold text-lg leading-tight text-gray-800">Cilegon Petshop</h2><p id="topRole" class="text-xs text-primary font-semibold uppercase tracking-wider">Owner</p></div>
+                </div>
+            </div>
+            
+            <div class="overflow-y-auto flex-1 p-4 scroll-hidden">
+                <nav class="space-y-1.5 font-medium text-gray-600">
+                    <a href="#" onclick="nav('dashboard')" id="menu-dashboard" class="flex items-center px-4 py-3 rounded-xl hover:bg-red-50 hover:text-primary transition menu-item group"><i class="fas fa-chart-line w-8 text-center text-gray-400 group-hover:text-primary transition"></i> Dashboard</a>
+
+                    <div class="text-xs font-bold text-gray-400 uppercase tracking-wider mt-4 mb-2 px-4">Transaction</div>
+                    <a href="#" onclick="nav('pos')" id="menu-pos" class="flex items-center px-4 py-3 rounded-xl hover:bg-red-50 hover:text-primary transition menu-item group"><i class="fas fa-shopping-basket w-8 text-center text-gray-400 group-hover:text-primary transition"></i> Point of Sale</a>
+                    <a href="#" onclick="nav('stockin')" id="menu-stockin" class="flex items-center px-4 py-3 rounded-xl hover:bg-red-50 hover:text-primary transition menu-item group"><i class="fas fa-truck-loading w-8 text-center text-gray-400 group-hover:text-primary transition"></i> Tambah Stok</a>
+                    <a href="#" onclick="nav('expense')" id="menu-expense" class="flex items-center px-4 py-3 rounded-xl hover:bg-red-50 hover:text-primary transition menu-item group"><i class="fas fa-wallet w-8 text-center text-gray-400 group-hover:text-primary transition"></i> Pengeluaran</a>
+
+                    <div class="text-xs font-bold text-gray-400 uppercase tracking-wider mt-4 mb-2 px-4">Reporting</div>
+                    <a href="#" onclick="nav('laporanMenu')" id="menu-laporanMenu" class="flex items-center px-4 py-3 rounded-xl hover:bg-red-50 hover:text-primary transition menu-item group"><i class="fas fa-file-invoice w-8 text-center text-gray-400 group-hover:text-primary transition"></i> Report Management</a>
+
+                    <!-- SETTINGS DROPDOWN -->
+                    <div id="menuAdminOnly">
+                        <div class="text-xs font-bold text-gray-400 uppercase tracking-wider mt-4 mb-2 px-4">System</div>
+                        <button onclick="toggleMenu('menuSettings', this)" class="w-full flex justify-between items-center px-4 py-3 rounded-xl hover:bg-red-50 transition group">
+                            <div class="flex items-center"><i class="fas fa-cog w-8 text-center text-gray-400 group-hover:text-primary transition"></i> Settings</div><i class="fas fa-chevron-down text-xs text-gray-400 chevron transition-transform"></i>
+                        </button>
+                        <div id="menuSettings" class="menu-collapsible pl-10 space-y-1">
+                            <a href="#" onclick="nav('users')" id="menu-users" class="block py-2 text-sm text-gray-600 hover:text-primary menu-item">User Management</a>
+                            <a href="#" onclick="nav('products')" id="menu-products" class="block py-2 text-sm text-gray-600 hover:text-primary menu-item">Product List</a>
+                            <a href="#" onclick="nav('customers')" id="menu-customers" class="block py-2 text-sm text-gray-600 hover:text-primary menu-item">Data Pelanggan</a>
+                            <a href="#" onclick="nav('promos')" id="menu-promos" class="block py-2 text-sm text-gray-600 hover:text-primary menu-item">Promo & Poin</a>
+                        </div>
+                    </div>
+                </nav>
+            </div>
+            
+            <div class="p-4 border-t border-gray-100"><a href="#" onclick="logout()" class="flex items-center px-4 py-3 rounded-xl hover:bg-red-50 text-red-600 transition font-bold"><i class="fas fa-sign-out-alt w-8 text-center"></i> Logout</a></div>
+        </aside>
+
+        <!-- Overlay -->
+        <div id="sidebarOverlay" onclick="toggleSidebar()" class="fixed inset-0 bg-black/50 z-40 hidden md:hidden backdrop-blur-sm transition-opacity"></div>
+
+        <!-- Main Content Area -->
+        <div class="flex-1 flex flex-col h-full w-full overflow-hidden relative bg-background">
+            <header class="bg-white shadow-sm h-16 flex items-center justify-between px-4 lg:px-6 sticky top-0 z-30 border-b border-gray-100">
+                <div class="flex items-center">
+                    <button onclick="toggleSidebar()" class="text-gray-600 hover:text-primary text-xl mr-4 focus:outline-none"><i class="fas fa-bars"></i></button>
+                    <h2 id="globalTitle" class="text-xl font-bold text-gray-800">Dashboard</h2>
+                </div>
+                <div class="flex items-center gap-4">
+                    <div class="hidden sm:flex items-center bg-gray-50 rounded-full px-3 py-1.5 border border-gray-200">
+                        <div class="w-2 h-2 rounded-full bg-green-500 mr-2 animate-pulse"></div>
+                        <span class="text-xs font-semibold text-gray-600" id="lastUpdateTime">Just Now</span>
+                        <button onclick="refreshApp()" class="ml-3 text-primary hover:text-primaryDark"><i class="fas fa-sync-alt"></i></button>
+                    </div>
+                </div>
+            </header>
+
+            <main class="flex-1 overflow-y-auto">
+                
+                <!-- VIEW: DASHBOARD -->
+                <div id="view-dashboard" class="view-section hidden p-4 lg:p-6 space-y-6">
+                    <div class="flex flex-col md:flex-row gap-4 mb-2">
+                        <div class="bg-white border rounded-lg px-3 py-2 flex items-center text-gray-600 md:w-64 w-full shadow-sm"><i class="far fa-calendar-alt mr-2"></i><input type="date" id="dashDate" class="outline-none text-sm w-full bg-transparent" onchange="loadDashboard()"></div>
+                    </div>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                        <div class="bg-white p-5 rounded-2xl border border-gray-100 shadow-[0_2px_10px_rgba(0,0,0,0.02)] flex items-center justify-between"><div><p class="text-gray-400 text-xs font-bold uppercase tracking-wider mb-1">Transaksi</p><h3 id="dashTotalInv" class="text-3xl font-black text-gray-800">0</h3></div><div class="w-14 h-14 rounded-full bg-blue-50 text-blue-500 flex items-center justify-center text-2xl"><i class="fas fa-receipt"></i></div></div>
+                        <div class="bg-white p-5 rounded-2xl border border-gray-100 shadow-[0_2px_10px_rgba(0,0,0,0.02)] flex items-center justify-between"><div><p class="text-gray-400 text-xs font-bold uppercase tracking-wider mb-1">Pendapatan</p><h3 id="dashTotalRev" class="text-2xl font-black text-gray-800">Rp 0</h3></div><div class="w-14 h-14 rounded-full bg-green-50 text-green-500 flex items-center justify-center text-2xl"><i class="fas fa-wallet"></i></div></div>
+                        <div class="bg-white p-5 rounded-2xl border border-gray-100 shadow-[0_2px_10px_rgba(0,0,0,0.02)] flex items-center justify-between"><div><p class="text-gray-400 text-xs font-bold uppercase tracking-wider mb-1">Keuntungan</p><h3 id="dashTotalProfit" class="text-2xl font-black text-primary">Rp 0</h3></div><div class="w-14 h-14 rounded-full bg-red-50 text-primary flex items-center justify-center text-2xl"><i class="fas fa-hand-holding-usd"></i></div></div>
+                    </div>
+
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                        <div class="lg:col-span-2 bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
+                            <div class="flex justify-between items-center mb-4"><h3 class="font-bold text-gray-800">Grafik Keuntungan & Pendapatan</h3><span class="text-xs text-gray-400 dashDateText">Hari Ini</span></div>
+                            <div class="w-full h-64"><canvas id="chartMainLine"></canvas></div>
+                        </div>
+                        <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 flex flex-col">
+                            <h3 class="font-bold text-gray-800 mb-4">Penjualan Kategori</h3>
+                            <div class="flex-1 w-full min-h-[200px] flex items-center justify-center relative"><canvas id="chartDoughnut"></canvas></div>
+                        </div>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        <!-- Log Aktivitas -->
+                        <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 flex flex-col h-72">
+                            <h3 class="font-bold text-gray-800 mb-4 border-b pb-2">Log Aktivitas Terakhir</h3>
+                            <div class="flex-1 overflow-y-auto space-y-3 pr-2" id="activityLogContainer">
+                                <!-- Logs Injected via JS -->
+                            </div>
+                        </div>
+                        <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
+                            <h3 class="font-bold text-gray-800 mb-4">Aktivitas Transaksi (Jam)</h3>
+                            <div class="w-full h-48"><canvas id="chartBarTrx"></canvas></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- VIEW: CUSTOMERS -->
+                <div id="view-customers" class="view-section hidden p-4 lg:p-6"><div class="bg-white rounded-2xl shadow-sm border p-6"><div class="flex justify-between items-center mb-6"><h3 class="text-lg font-bold">Data Pelanggan</h3><button onclick="openModal('modalCustomer')" class="bg-primary hover:bg-primaryDark text-white px-4 py-2 rounded-lg text-sm font-semibold transition shadow-sm"><i class="fas fa-plus mr-2"></i>Tambah Pelanggan</button></div><div class="overflow-x-auto"><table class="w-full text-left text-sm whitespace-nowrap"><thead class="bg-gray-50 text-gray-500 border-b"><tr><th class="p-4 font-semibold">Nama</th><th class="p-4 font-semibold">No HP</th><th class="p-4 font-semibold">Alamat</th><th class="p-4 font-semibold text-center">Poin</th><th class="p-4 font-semibold text-center">Action</th></tr></thead><tbody id="customerTableBody" class="divide-y divide-gray-100"></tbody></table></div></div></div>
+
+                <!-- VIEW: PROMO -->
+                <div id="view-promos" class="view-section hidden p-4 lg:p-6"><div class="bg-white rounded-2xl shadow-sm border p-6"><div class="flex justify-between items-center mb-6"><h3 class="text-lg font-bold">Manajemen Promo & Poin</h3><button onclick="openModal('modalPromo')" class="bg-primary hover:bg-primaryDark text-white px-4 py-2 rounded-lg text-sm font-semibold transition shadow-sm"><i class="fas fa-plus mr-2"></i>Buat Promo</button></div><div class="overflow-x-auto"><table class="w-full text-left text-sm whitespace-nowrap"><thead class="bg-gray-50 text-gray-500 border-b"><tr><th class="p-4 font-semibold">Nama Promo</th><th class="p-4 font-semibold">Tipe Aturan</th><th class="p-4 font-semibold">Target Value</th><th class="p-4 font-semibold text-center">Reward Poin</th><th class="p-4 font-semibold text-center">Status</th><th class="p-4 font-semibold text-center">Action</th></tr></thead><tbody id="promoTableBody" class="divide-y divide-gray-100"></tbody></table></div></div></div>
+
+                <!-- VIEW: POS -->
+                <div id="view-pos" class="view-section hidden p-2 md:p-4 lg:p-6 min-h-[calc(100vh-64px)]">
+                    <div class="flex flex-col lg:flex-row gap-4 h-full">
+                        <div class="lg:w-2/3 flex flex-col gap-4">
+                            <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-4"><div class="flex flex-col md:flex-row gap-3"><div class="flex-1 relative"><i class="fas fa-search absolute left-4 top-3.5 text-gray-400"></i><input type="text" id="posBarcode" placeholder="Scan Barcode / Cari Produk..." class="w-full pl-11 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl outline-none focus:border-primary text-sm" onkeypress="handleBarcodeEnter(event)"></div><button onclick="openScanner('posBarcode')" class="bg-white border border-gray-200 text-gray-600 px-4 py-3 rounded-xl"><i class="fas fa-camera text-lg"></i></button><button onclick="addPosRow()" class="bg-blue-50 text-blue-600 px-4 py-3 rounded-xl font-bold"><i class="fas fa-plus"></i> Item</button></div></div>
+                            <div class="bg-white rounded-2xl shadow-sm border border-gray-100 flex-1 overflow-hidden flex flex-col"><div class="overflow-auto flex-1 p-0"><table class="w-full text-left text-sm min-w-[500px]"><thead class="bg-gray-50 border-b sticky top-0 z-10 text-gray-500 uppercase text-xs"><tr><th class="p-4 w-10 text-center">No</th><th class="p-4">Item Details</th><th class="p-4 w-24 text-center">Qty</th><th class="p-4 w-32 text-right">Price</th><th class="p-4 w-32 text-right">Total</th><th class="p-4 w-12 text-center">Act</th></tr></thead><tbody id="posTableBody" class="divide-y divide-gray-50"></tbody></table></div></div>
+                        </div>
+                        <div class="lg:w-1/3 bg-white rounded-2xl shadow-lg border border-gray-100 flex flex-col overflow-hidden h-full max-h-[calc(100vh-100px)] lg:sticky lg:top-4">
+                            <div class="p-5 border-b border-gray-100 bg-gray-50"><h3 class="font-bold text-gray-800 text-lg flex items-center gap-2"><i class="fas fa-shopping-cart text-primary"></i> Order Details</h3></div>
+                            <div class="p-5 space-y-4 flex-1 overflow-auto">
+                                <div><label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Pilih Pelanggan (Untuk Poin)</label>
+                                    <div class="relative"><i class="far fa-user absolute left-3 top-2.5 text-gray-400"></i><select id="posBuyer" class="w-full pl-9 pr-3 py-2 border rounded-lg focus:outline-none focus:border-primary text-sm appearance-none"><option value="">Umum / Walk-in</option></select></div>
+                                </div>
+                                <div><label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Tanggal Transaksi</label><input type="date" id="posDate" class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:border-primary text-sm"></div>
+                                <div class="border-t border-dashed border-gray-200 pt-4 mt-4 space-y-3">
+                                    <div class="flex justify-between text-sm font-medium text-gray-600"><span>Sub Total (<span id="posTotalItem">0</span> item)</span><span id="posTotalNominal">Rp 0</span></div>
+                                    <div class="flex justify-between items-center text-sm font-medium text-gray-600"><span>Discount</span><div class="flex items-center gap-1 w-32"><select id="posDiscountType" class="border rounded bg-gray-50 p-1.5 outline-none text-xs" onchange="calculatePos()"><option value="rp">Rp</option><option value="%">%</option></select><input type="number" id="posDiscount" value="0" min="0" class="border rounded p-1.5 outline-none flex-1 text-right text-sm" oninput="calculatePos()"></div></div>
+                                </div>
+                            </div>
+                            <div class="bg-primary p-6 text-white rounded-b-2xl mt-auto shadow-[0_-4px_10px_rgba(217,4,41,0.2)]"><div class="flex justify-between items-end mb-4"><span class="text-white/80 text-sm font-medium">Total Payable</span><span id="posTotalPayment" class="font-black text-3xl tracking-tight">Rp 0</span></div><div class="grid grid-cols-2 gap-3"><button onclick="resetPos()" class="bg-white/10 hover:bg-white/20 font-semibold py-3 rounded-xl transition">Cancel</button><button onclick="processSale()" class="bg-white text-primary hover:bg-gray-50 font-black py-3 rounded-xl shadow-md transition flex justify-center items-center gap-2"><i class="fas fa-check-circle"></i> Pay Now</button></div></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- USERS -->
+                <div id="view-users" class="view-section hidden p-4 lg:p-6"><div class="bg-white rounded-2xl shadow-sm border p-6"><div class="flex justify-between items-center mb-6"><h3 class="text-lg font-bold">User Management</h3><button onclick="openModal('modalUser')" class="bg-primary text-white px-4 py-2 rounded-lg text-sm font-semibold transition"><i class="fas fa-plus mr-2"></i>Tambah User</button></div><div class="overflow-x-auto"><table class="w-full text-left text-sm whitespace-nowrap"><thead class="bg-gray-50 text-gray-500 border-b"><tr><th class="p-4">Username</th><th class="p-4">Role</th><th class="p-4 text-center">Act</th></tr></thead><tbody id="userTableBody"></tbody></table></div></div></div>
+
+                <!-- PRODUCTS -->
+                <div id="view-products" class="view-section hidden p-4 lg:p-6"><div class="bg-white rounded-2xl shadow-sm border p-6"><div class="flex justify-between items-center mb-6"><h3 class="text-lg font-bold">Product List</h3><button onclick="openProductModal()" class="bg-primary text-white px-4 py-2 rounded-lg text-sm font-semibold transition"><i class="fas fa-plus mr-2"></i>Tambah Produk</button></div><div class="overflow-x-auto"><table class="w-full text-left text-sm whitespace-nowrap"><thead class="bg-gray-50 text-gray-500 border-b"><tr><th class="p-4">Img</th><th class="p-4">Name</th><th class="p-4">Category</th><th class="p-4">Stock</th><th class="p-4">Cost</th><th class="p-4">Price</th><th class="p-4 text-center">Act</th></tr></thead><tbody id="productTableBody"></tbody></table></div></div></div>
+
+                <!-- STOCK IN -->
+                <div id="view-stockin" class="view-section hidden p-4 lg:p-6"><div class="bg-white rounded-2xl shadow-sm border p-8 max-w-2xl mx-auto"><h3 class="text-xl font-black text-gray-800 mb-6 border-b pb-4">Form Tambah Stok</h3><form id="formStockIn" onsubmit="saveStockIn(event)" class="space-y-5"><div><label class="block text-sm font-bold text-gray-500 mb-1">Tanggal</label><input type="date" id="stkDate" class="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 outline-none focus:border-primary" required></div><div><label class="block text-sm font-bold text-gray-500 mb-1">Kategori</label><select id="stkCat" class="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 outline-none focus:border-primary" onchange="filterStkProducts()" required><option value="">Pilih Kategori...</option><option value="Makanan Kucing">Makanan Kucing</option><option value="Makanan Anjing">Makanan Anjing</option><option value="Perlengkapan Hewan">Perlengkapan Hewan</option><option value="Klinik dan Obat-obatan">Klinik dan Obat-obatan</option><option value="Aset">Aset</option></select></div><div><label class="block text-sm font-bold text-gray-500 mb-1">Produk</label><select id="stkProduct" class="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 outline-none focus:border-primary" required disabled><option value="">Pilih Produk...</option></select></div><div><label class="block text-sm font-bold text-gray-500 mb-1">Quantity (Stok Masuk)</label><input type="number" id="stkQty" min="1" placeholder="Masukkan jumlah" class="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 outline-none focus:border-primary" required></div><button type="submit" class="w-full bg-primary text-white font-bold py-3 rounded-xl transition shadow-md mt-4">Simpan Stok</button></form></div></div>
+                
+                <!-- EXPENSE -->
+                <div id="view-expense" class="view-section hidden p-4 lg:p-6"><div class="bg-white rounded-2xl shadow-sm border p-8 max-w-2xl mx-auto"><h3 class="text-xl font-black text-gray-800 mb-6 border-b pb-4">Form Pengeluaran</h3><form id="formExpense" onsubmit="saveExpense(event)" class="space-y-5"><div><label class="block text-sm font-bold text-gray-500 mb-1">Tanggal</label><input type="date" id="expDate" class="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 outline-none focus:border-primary" required></div><div><label class="block text-sm font-bold text-gray-500 mb-1">Kategori Biaya</label><select id="expCat" class="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 outline-none focus:border-primary" onchange="checkExpLainnya()" required><option value="Iklan">Iklan</option><option value="Belanja Modal">Belanja Modal</option><option value="Gaji">Gaji</option><option value="Listrik">Listrik</option><option value="Lainnya">Lainnya...</option></select><input type="text" id="expCatLainnya" placeholder="Ketik spesifik..." class="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 mt-2 hidden outline-none focus:border-primary"></div><div><label class="block text-sm font-bold text-gray-500 mb-1">Vendor / Penerima</label><input type="text" id="expVendor" placeholder="Nama Vendor" class="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 outline-none focus:border-primary" required></div><div class="flex gap-4"><div class="w-1/3"><label class="block text-sm font-bold text-gray-500 mb-1">Qty</label><input type="number" id="expQty" min="1" value="1" class="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 outline-none focus:border-primary" oninput="calcExp()" required></div><div class="flex-1"><label class="block text-sm font-bold text-gray-500 mb-1">Nominal (Rp)</label><input type="number" id="expNominal" placeholder="Harga Satuan" class="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 outline-none focus:border-primary" oninput="calcExp()" required></div></div><div><label class="block text-sm font-bold text-gray-500 mb-1">Total Biaya</label><input type="text" id="expTotal" class="w-full bg-gray-100 border border-gray-200 rounded-xl px-4 py-3 font-bold text-lg text-primary outline-none" readonly></div><button type="submit" class="w-full bg-primary text-white font-bold py-3 rounded-xl transition shadow-md mt-4">Simpan Pengeluaran</button></form></div></div>
+                
+                <!-- MENU LAPORAN -->
+                <div id="view-laporanMenu" class="view-section hidden p-4 lg:p-6"><h2 class="text-2xl font-bold text-gray-800 mb-6 border-b pb-4">Report Management</h2><div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"><a href="#" onclick="nav('ringkasanPenjualan')" class="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md hover:border-primary transition group flex items-center gap-4"><div class="w-14 h-14 rounded-full bg-red-50 text-primary flex items-center justify-center text-2xl group-hover:bg-primary group-hover:text-white transition"><i class="fas fa-file-invoice-dollar"></i></div><div><h4 class="font-bold text-gray-800">Ringkasan Penjualan</h4><p class="text-xs text-gray-500">Laporan untung & item terjual</p></div></a><a href="#" onclick="nav('repFinance')" class="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md hover:border-primary transition group flex items-center gap-4"><div class="w-14 h-14 rounded-full bg-red-50 text-primary flex items-center justify-center text-2xl group-hover:bg-primary group-hover:text-white transition"><i class="fas fa-balance-scale"></i></div><div><h4 class="font-bold text-gray-800">Laba Rugi & Arus</h4><p class="text-xs text-gray-500">Pemasukan vs Pengeluaran</p></div></a><a href="#" onclick="nav('repSales')" class="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md hover:border-primary transition group flex items-center gap-4"><div class="w-14 h-14 rounded-full bg-red-50 text-primary flex items-center justify-center text-2xl group-hover:bg-primary group-hover:text-white transition"><i class="fas fa-chart-pie"></i></div><div><h4 class="font-bold text-gray-800">Daftar Transaksi</h4><p class="text-xs text-gray-500">Histori struk penjualan penuh</p></div></a></div></div>
+
+                <!-- RINGKASAN PENJUALAN -->
+                <div id="view-ringkasanPenjualan" class="view-section hidden bg-white min-h-full border-t relative">
+                    <div class="flex flex-col md:flex-row items-center justify-between p-4 bg-gray-50 border-b no-print gap-4">
+                        <div class="flex items-center gap-3 w-full md:w-auto"><button onclick="nav('laporanMenu')" class="text-gray-500 bg-white p-2 border rounded-lg shadow-sm"><i class="fas fa-arrow-left"></i></button><h2 class="text-lg font-bold text-gray-800">Ringkasan Penjualan Barang</h2></div>
+                        <div class="flex flex-wrap gap-2 w-full md:w-auto">
+                            <div class="bg-white border rounded-lg px-3 py-1.5 flex items-center gap-2 text-sm shadow-sm flex-1 md:flex-none"><i class="far fa-calendar text-gray-400"></i><input type="date" id="sumDateStart" class="outline-none w-24 bg-transparent"><span class="text-gray-300">-</span><input type="date" id="sumDateEnd" class="outline-none w-24 bg-transparent"><button onclick="loadSalesSummary()" class="bg-gray-100 px-2 rounded hover:bg-gray-200">Go</button></div>
+                            <button onclick="exportSummaryCSV()" class="bg-green-600 text-white px-4 py-1.5 rounded-lg text-sm font-semibold shadow-sm hover:bg-green-700"><i class="fas fa-file-csv mr-1"></i> CSV</button>
+                            <button onclick="printSummary()" class="bg-primary text-white px-4 py-1.5 rounded-lg text-sm font-semibold shadow-sm hover:bg-primaryDark"><i class="fas fa-print mr-1"></i> Print</button>
+                        </div>
+                    </div>
+                    <div class="p-4 lg:p-8 max-w-4xl mx-auto"><div id="listSalesSummary" class="divide-y divide-gray-100 border border-gray-100 rounded-2xl overflow-hidden shadow-sm"></div></div>
+                </div>
+                
+                <!-- REP SALES -->
+                <div id="view-repSales" class="view-section hidden p-4 lg:p-6"><div class="bg-white rounded-2xl shadow-sm border p-4 md:p-6"><div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4"><div class="flex items-center gap-3"><button onclick="nav('laporanMenu')" class="text-gray-500 bg-gray-100 p-2 rounded"><i class="fas fa-arrow-left"></i></button><h3 class="text-lg font-bold">Data Penjualan</h3></div><div class="flex flex-wrap gap-2 w-full md:w-auto"><input type="date" id="filterSaleStart" class="border rounded-lg px-3 text-sm py-2 bg-gray-50"><input type="date" id="filterSaleEnd" class="border rounded-lg px-3 text-sm py-2 bg-gray-50"><button onclick="loadSales()" class="bg-accent text-white px-4 py-2 rounded-lg text-sm font-semibold shadow-sm">Filter</button></div></div><div class="overflow-x-auto"><table class="w-full text-left text-sm whitespace-nowrap"><thead class="bg-gray-50 text-gray-500 border-b"><tr><th class="p-4">ID Inv</th><th class="p-4">Tgl</th><th class="p-4">Pembeli</th><th class="p-4">Total</th><th class="p-4">Diskon</th><th class="p-4">Bayar</th></tr></thead><tbody id="repSalesBody" class="divide-y divide-gray-100"></tbody></table></div></div></div>
+                
+                <!-- REP FINANCE -->
+                <div id="view-repFinance" class="view-section hidden p-4 lg:p-6"><div class="bg-white rounded-2xl shadow-sm border p-4 md:p-6"><div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4"><div class="flex items-center gap-3"><button onclick="nav('laporanMenu')" class="text-gray-500 bg-gray-100 p-2 rounded"><i class="fas fa-arrow-left"></i></button><h3 class="text-lg font-bold">Data Keuangan</h3></div><div class="flex flex-wrap gap-2 w-full md:w-auto"><input type="date" id="filterFinStart" class="border rounded-lg px-3 text-sm py-2 bg-gray-50"><input type="date" id="filterFinEnd" class="border rounded-lg px-3 text-sm py-2 bg-gray-50"><button onclick="loadFinance()" class="bg-accent text-white px-4 py-2 rounded-lg text-sm font-semibold shadow-sm">Filter</button></div></div><div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6"><div class="border rounded-xl p-5 bg-green-50"><p class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Pemasukan</p><h4 id="finIn" class="text-2xl font-black text-green-600">Rp 0</h4></div><div class="border rounded-xl p-5 bg-red-50"><p class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Pengeluaran</p><h4 id="finOut" class="text-2xl font-black text-red-600">Rp 0</h4></div><div class="border border-primary rounded-xl p-5 bg-white"><p class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Laba Bersih</p><h4 id="finNet" class="text-2xl font-black text-primary">Rp 0</h4></div></div><div class="overflow-x-auto"><table class="w-full text-left text-sm whitespace-nowrap"><thead class="bg-gray-50 text-gray-500 border-b"><tr><th class="p-4">Tgl</th><th class="p-4">Kategori Biaya</th><th class="p-4">Vendor</th><th class="p-4">Total (Rp)</th></tr></thead><tbody id="repFinBody" class="divide-y divide-gray-100"></tbody></table></div></div></div>
+
+            </main>
+        </div>
+    </div>
+
+    <!-- MODALS -->
+    <div id="modalUser" class="fixed inset-0 bg-black/60 hidden items-center justify-center z-50 p-4"><div class="bg-white rounded-2xl shadow-xl p-6 w-full max-w-sm"><h3 class="text-xl font-bold mb-4">Form User</h3><form id="formUser" onsubmit="saveUser(event)"><input type="hidden" id="userId"><div class="mb-3"><input type="text" id="userUname" placeholder="Username" class="w-full border rounded-xl px-4 py-3 bg-gray-50 outline-none focus:border-primary" required></div><div class="mb-3"><input type="text" id="userPass" placeholder="Password" class="w-full border rounded-xl px-4 py-3 bg-gray-50 outline-none focus:border-primary" required></div><div class="mb-5"><select id="userRole" class="w-full border rounded-xl px-4 py-3 bg-gray-50 outline-none focus:border-primary" required><option value="Admin">Admin</option><option value="Kasir">Kasir</option></select></div><div class="flex justify-end gap-3"><button type="button" onclick="closeModal('modalUser')" class="bg-gray-100 px-5 py-2.5 rounded-xl font-semibold">Batal</button><button type="submit" class="bg-primary text-white px-5 py-2.5 rounded-xl font-semibold">Simpan</button></div></form></div></div>
+    <div id="modalProduct" class="fixed inset-0 bg-black/60 hidden items-center justify-center z-50 p-4"><div class="bg-white rounded-2xl shadow-xl p-6 w-full max-w-md max-h-[90vh] overflow-y-auto scroll-hidden"><h3 class="text-xl font-bold mb-4">Form Produk</h3><form id="formProduct" onsubmit="saveProduct(event)"><input type="hidden" id="prodId"><input type="hidden" id="prodExistingImage"><div class="mb-4 flex flex-col items-center"><img id="prodPreview" src="" class="w-24 h-24 object-cover border-2 border-dashed rounded-xl bg-gray-50 mb-2 hidden"><input type="file" id="prodFile" accept="image/*" class="w-full text-sm border rounded-xl file:py-2 file:px-4 file:bg-red-50 file:text-primary file:border-0" onchange="previewImage(event)"></div><div class="mb-3"><input type="text" id="prodName" placeholder="Nama Produk" class="w-full border rounded-xl px-4 py-2.5 bg-gray-50 outline-none focus:border-primary" required></div><div class="mb-3"><select id="prodCat" class="w-full border rounded-xl px-4 py-2.5 bg-gray-50 outline-none focus:border-primary" required><option value="Makanan Kucing">Makanan Kucing</option><option value="Makanan Anjing">Makanan Anjing</option><option value="Perlengkapan Hewan">Perlengkapan Hewan</option><option value="Klinik dan Obat-obatan">Klinik dan Obat-obatan</option><option value="Aset">Aset</option></select></div><div class="mb-3 flex gap-2"><input type="text" id="prodBarcode" placeholder="Barcode" class="flex-1 border rounded-xl px-4 py-2.5 bg-gray-50 outline-none focus:border-primary"><button type="button" onclick="openScanner('prodBarcode')" class="bg-gray-100 border px-4 rounded-xl hover:bg-gray-200 transition"><i class="fas fa-camera"></i></button></div><div class="mb-3"><input type="number" id="prodQty" placeholder="Stok (Qty)" class="w-full border rounded-xl px-4 py-2.5 bg-gray-50 outline-none focus:border-primary" required></div><div class="flex gap-3 mb-6"><input type="number" id="prodModal" placeholder="Modal" class="w-1/2 border rounded-xl px-4 py-2.5 bg-gray-50 outline-none focus:border-primary" required><input type="number" id="prodJual" placeholder="Jual" class="w-1/2 border rounded-xl px-4 py-2.5 bg-gray-50 outline-none focus:border-primary" required></div><div class="flex justify-end gap-3"><button type="button" onclick="closeModal('modalProduct')" class="bg-gray-100 px-5 py-2.5 rounded-xl font-semibold">Batal</button><button type="submit" class="bg-primary text-white px-5 py-2.5 rounded-xl font-semibold">Simpan</button></div></form></div></div>
+    <div id="modalCustomer" class="fixed inset-0 bg-black/60 hidden items-center justify-center z-50 p-4"><div class="bg-white rounded-2xl shadow-xl p-6 w-full max-w-sm"><h3 class="text-xl font-bold mb-4">Form Pelanggan</h3><form id="formCustomer" onsubmit="saveCustomer(event)"><input type="hidden" id="custId"><div class="mb-3"><input type="text" id="custName" placeholder="Nama Pelanggan" class="w-full border rounded-xl px-4 py-3 bg-gray-50 outline-none focus:border-primary" required></div><div class="mb-3"><input type="text" id="custPhone" placeholder="Nomor HP" class="w-full border rounded-xl px-4 py-3 bg-gray-50 outline-none focus:border-primary"></div><div class="mb-5"><textarea id="custAddr" placeholder="Alamat" class="w-full border rounded-xl px-4 py-3 bg-gray-50 outline-none focus:border-primary" rows="2"></textarea></div><div class="flex justify-end gap-3"><button type="button" onclick="closeModal('modalCustomer')" class="bg-gray-100 px-5 py-2.5 rounded-xl font-semibold">Batal</button><button type="submit" class="bg-primary text-white px-5 py-2.5 rounded-xl font-semibold">Simpan</button></div></form></div></div>
+    <div id="modalPromo" class="fixed inset-0 bg-black/60 hidden items-center justify-center z-50 p-4"><div class="bg-white rounded-2xl shadow-xl p-6 w-full max-w-sm"><h3 class="text-xl font-bold mb-4">Form Promo</h3><form id="formPromo" onsubmit="savePromo(event)"><input type="hidden" id="promoId"><div class="mb-3"><input type="text" id="promoName" placeholder="Judul Promo" class="w-full border rounded-xl px-4 py-3 bg-gray-50 outline-none focus:border-primary" required></div><div class="mb-3"><select id="promoType" class="w-full border rounded-xl px-4 py-3 bg-gray-50 outline-none focus:border-primary" onchange="togglePromoType()" required><option value="nominal">Berdasarkan Nominal Belanja</option><option value="produk">Berdasarkan Pembelian Produk</option></select></div><div class="mb-3" id="promoTargetNominalWrap"><input type="number" id="promoTargetNominal" placeholder="Min. Belanja (Rp)" class="w-full border rounded-xl px-4 py-3 bg-gray-50 outline-none focus:border-primary"></div><div class="mb-3 hidden" id="promoTargetProdukWrap"><select id="promoTargetProduk" class="w-full border rounded-xl px-4 py-3 bg-gray-50 outline-none focus:border-primary"><option value="">Pilih Produk...</option></select></div><div class="mb-5"><input type="number" id="promoReward" placeholder="Poin Didapat" class="w-full border rounded-xl px-4 py-3 bg-gray-50 outline-none focus:border-primary" required></div><div class="flex justify-end gap-3"><button type="button" onclick="closeModal('modalPromo')" class="bg-gray-100 px-5 py-2.5 rounded-xl font-semibold">Batal</button><button type="submit" class="bg-primary text-white px-5 py-2.5 rounded-xl font-semibold">Simpan</button></div></form></div></div>
+    
+    <!-- Scanner Modal -->
+    <div id="modalScanner" class="fixed inset-0 bg-black/90 hidden items-center justify-center z-[60] p-4"><div class="bg-white rounded-2xl p-2 w-full max-w-sm relative"><button onclick="closeScanner()" class="absolute -top-4 -right-4 bg-white text-gray-800 rounded-full w-10 h-10 flex items-center justify-center shadow-lg"><i class="fas fa-times text-xl"></i></button><div id="reader" width="100%" class="rounded-xl overflow-hidden"></div><p class="text-center text-sm font-medium text-gray-500 mt-2">Arahkan kamera ke Barcode/QR</p></div></div>
+
+    <!-- STRUK AREA -->
+    <div id="print-area" class="hidden">
+        <div style="text-align:center;border-bottom:2px dashed #000;padding-bottom:10px;"><h2 style="margin:0;font-size:18px;font-weight:900;">CILEGON PETSHOP</h2><p style="margin:0;font-size:10px;">Struk Pembelian</p></div>
+        <div id="print-details" style="font-size:11px;margin:10px 0;line-height:1.4;"></div>
+        <table style="width:100%;font-size:11px;border-bottom:2px dashed #000;border-top:2px dashed #000;margin-bottom:10px;padding:5px 0;"><thead><tr><th style="text-align:left;padding:3px 0;">Item</th><th style="text-align:center;padding:3px 0;">Qty</th><th style="text-align:right;padding:3px 0;">Total</th></tr></thead><tbody id="print-items"></tbody></table>
+        <div style="text-align:right;font-size:11px;line-height:1.5;"><p style="margin:0;">Subtotal: <span id="print-sub"></span></p><p style="margin:0;">Diskon: <span id="print-disc"></span></p><p style="font-weight:900;font-size:14px;margin-top:5px;">TOTAL: <span id="print-total"></span></p></div>
+        <div style="text-align:center;margin-top:20px;font-size:10px;font-style:italic;">Terima kasih!</div>
+    </div>
+
+    <script>
+        // CONFIG SUPABASE
+        const SUPABASE_URL = 'https://wzhyxazjlqpvnciggflf.supabase.co';
+        const SUPABASE_KEY = 'sb_publishable_IcXnWIddF0cWsVBGX1pLLA_YB24fcYv';
+        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+        // STATE
+        let currentUser = null; let allProducts = []; let allCustomers = []; let allPromos = []; let posRows = 0; let html5QrcodeScanner = null; let activeScannerTarget = '';
+        let charts = { main: null, doughnut: null, bar: null };
+        window.summaryData = []; 
+
+        // UTILS
+        const formatRp = (num) => 'Rp ' + parseInt(num||0).toLocaleString('id-ID');
+        const getToday = () => new Date().toISOString().split('T')[0];
+        const formatDateIndo = (dateStr) => { const d = new Date(dateStr); return ("0"+d.getDate()).slice(-2)+"-"+("0"+(d.getMonth()+1)).slice(-2)+"-"+d.getFullYear(); };
+        const showLoad = () => document.getElementById('loadingOverlay').style.display = 'flex';
+        const hideLoad = () => document.getElementById('loadingOverlay').style.display = 'none';
+
+        function toast(msg, isSuccess = true) {
+            const t = document.createElement('div');
+            t.className = `toast-slide-up px-6 py-3 rounded-full text-white text-sm font-semibold shadow-2xl flex items-center gap-2 ${isSuccess ? 'bg-green-500' : 'bg-primary'}`;
+            t.innerHTML = `<i class="fas ${isSuccess ? 'fa-check-circle' : 'fa-exclamation-circle'}"></i> ${msg}`;
+            document.getElementById('toastContainer').appendChild(t);
+            setTimeout(() => { t.style.opacity = '0'; setTimeout(()=>t.remove(),300); }, 3000);
+        }
+
+        // INIT & UI
+        window.onload = async () => {
+            const saved = sessionStorage.getItem('cp_user');
+            if (saved) { currentUser = JSON.parse(saved); await initApp(); } 
+            else { document.getElementById('loginScreen').style.display = 'flex'; }
+            ['posDate','stkDate','expDate','sumDateStart','sumDateEnd','filterSaleStart','filterSaleEnd','filterFinStart','filterFinEnd','dashDate'].forEach(id => {
+                if(document.getElementById(id)) document.getElementById(id).value = getToday();
+            });
+            setInterval(updateTimeDisplay, 60000);
+        };
+        
+        function updateTimeDisplay() {
+            const now = new Date();
+            const el = document.getElementById('lastUpdateTime');
+            if(el) el.innerText = now.toLocaleTimeString('id-ID', {hour: '2-digit', minute:'2-digit'});
+        }
+
+        async function logActivity(action, desc) {
+            if(!currentUser) return;
+            await supabase.from('activity_logs').insert([{ user_id: currentUser.id, username: currentUser.username, action: action, description: desc }]);
+        }
+
+        async function handleLogin(e) {
+            e?.preventDefault();
+            const u = document.getElementById('username').value, p = document.getElementById('password').value;
+            showLoad();
+            const { data, error } = await supabase.from('users').select('*').eq('username', u).eq('password', p).single();
+            hideLoad();
+            if (data) { 
+                currentUser = data; 
+                sessionStorage.setItem('cp_user', JSON.stringify(data)); 
+                toast(`Welcome, ${data.username}!`); 
+                logActivity('Login', `User ${data.username} masuk ke sistem`);
+                initApp(); 
+            } else {
+                toast('Username atau password salah!', false);
+            }
+        }
+
+        function logout() { sessionStorage.removeItem('cp_user'); location.reload(); }
+        function toggleSidebar() { const sb=document.getElementById('sidebar'); const ol=document.getElementById('sidebarOverlay'); if(window.innerWidth<768){sb.classList.toggle('-translate-x-full'); ol.classList.toggle('hidden');}else{sb.style.display=sb.style.display==='none'?'flex':'none';} }
+        function toggleMenu(menuId, btn) { const menu=document.getElementById(menuId); const icon=btn.querySelector('.chevron'); menu.classList.toggle('open'); icon.style.transform=menu.classList.contains('open')?'rotate(180deg)':'rotate(0deg)'; }
+        function openModal(id){ document.getElementById(id).style.display='flex'; }
+        function closeModal(id){ document.getElementById(id).style.display='none'; }
+
+        async function initApp() {
+            document.getElementById('loginScreen').style.display = 'none'; 
+            document.getElementById('mainApp').style.display = 'flex';
+            document.getElementById('topRole').innerText = currentUser.role;
+            if (currentUser.role === 'Admin') document.getElementById('menuAdminOnly').style.display = 'block';
+            else document.getElementById('menuAdminOnly').style.display = 'none';
+            await refreshApp();
+            nav('dashboard');
+        }
+
+        async function refreshApp() {
+            showLoad();
+            await fetchMasterData();
+            updateTimeDisplay();
+            const activeView = Array.from(document.querySelectorAll('.view-section')).find(el => !el.classList.contains('hidden'));
+            if(activeView) nav(activeView.id.replace('view-', ''));
+            hideLoad();
+        }
+
+        async function fetchMasterData() {
+            const resP = await supabase.from('products').select('*'); if(resP.data) allProducts = resP.data;
+            const resC = await supabase.from('customers').select('*'); if(resC.data) allCustomers = resC.data;
+            const resPr = await supabase.from('promos').select('*'); if(resPr.data) allPromos = resPr.data;
+            
+            document.querySelectorAll('.pos-select').forEach(sel => { const c = sel.value; sel.innerHTML = getProductOptionsHtml(); sel.value = c; });
+            const selCust = document.getElementById('posBuyer');
+            if(selCust) { selCust.innerHTML = '<option value="">Umum / Walk-in</option>' + allCustomers.map(c => `<option value="${c.id}">${c.name} (${c.phone||'-'}) - ${c.points} Poin</option>`).join(''); }
+            const selPromoT = document.getElementById('promoTargetProduk');
+            if(selPromoT) { selPromoT.innerHTML = '<option value="">Pilih Produk...</option>' + allProducts.map(p => `<option value="${p.id}">${p.name}</option>`).join(''); }
+        }
+
+        function nav(viewId) {
+            document.querySelectorAll('.view-section').forEach(el => el.style.display = 'none');
+            document.getElementById('view-' + viewId).style.display = 'block';
+            document.querySelectorAll('.menu-item').forEach(el => { el.classList.remove('bg-red-50', 'text-primary', 'border-r-4', 'border-primary'); const i = el.querySelector('i'); if(i) i.classList.remove('text-primary'); });
+            const activeMenu = document.getElementById('menu-' + viewId);
+            if(activeMenu) { activeMenu.classList.add('bg-red-50', 'text-primary', 'border-r-4', 'border-primary'); const i = activeMenu.querySelector('i'); if(i) i.classList.add('text-primary'); }
+            
+            const titles = { 'dashboard':'Dashboard', 'users':'User Management', 'products':'Product List', 'customers':'Data Pelanggan', 'promos':'Promo & Poin', 'pos':'Point of Sale', 'stockin':'Tambah Stok', 'expense':'Pengeluaran', 'laporanMenu':'Report Management', 'ringkasanPenjualan':'Ringkasan Penjualan', 'repSales':'Laporan Penjualan', 'repFinance':'Laporan Keuangan' };
+            document.getElementById('globalTitle').innerText = titles[viewId] || 'Cilegon Petshop';
+            
+            if(window.innerWidth < 768 && !document.getElementById('sidebar').classList.contains('-translate-x-full')) toggleSidebar(); 
+            
+            if(viewId === 'dashboard') loadDashboard();
+            if(viewId === 'users') loadUsers();
+            if(viewId === 'products') loadProducts();
+            if(viewId === 'customers') loadCustomers();
+            if(viewId === 'promos') loadPromos();
+            if(viewId === 'repSales') loadSales();
+            if(viewId === 'repFinance') loadFinance();
+            if(viewId === 'ringkasanPenjualan') loadSalesSummary();
+            if(viewId === 'pos' && posRows === 0) addPosRow();
+        }
+
+        // CHARTS & DASHBOARD
+        function initCharts(dTrx, dRev, dProf) {
+            const labelsLine = Array.from({length: 24}, (_, i) => ("0"+i).slice(-2) + ":00");
+            const ctxMain = document.getElementById('chartMainLine').getContext('2d');
+            if(charts.main) charts.main.destroy();
+            charts.main = new Chart(ctxMain, { type: 'line', data: { labels: labelsLine, datasets: [ { label: 'Pendapatan', data: dRev, borderColor: '#10b981', backgroundColor: '#10b98120', tension: 0.4, fill: true }, { label: 'Keuntungan', data: dProf, borderColor: '#d90429', borderDash: [5, 5], tension: 0.4 } ] }, options: { responsive: true, maintainAspectRatio: false } });
+
+            const ctxBar = document.getElementById('chartBarTrx').getContext('2d');
+            if(charts.bar) charts.bar.destroy();
+            charts.bar = new Chart(ctxBar, { type: 'bar', data: { labels: labelsLine, datasets: [{ label: 'Jml Transaksi', data: dTrx, backgroundColor: '#2b2d42', borderRadius: 4 }] }, options: { responsive: true, maintainAspectRatio: false } });
+        }
+
+        async function loadDashboard() {
+            showLoad();
+            const dateStr = document.getElementById('dashDate').value;
+            const {data: sales} = await supabase.from('sales').select('*').eq('date', dateStr);
+            const {data: details} = await supabase.from('sales_details').select('*');
+            const {data: logs} = await supabase.from('activity_logs').select('*').order('created_at', {ascending: false}).limit(10);
+            hideLoad();
+
+            let tInv=0, tRev=0, tProf=0;
+            let cTrx=Array(24).fill(0), cRev=Array(24).fill(0), cProf=Array(24).fill(0);
+            
+            if(sales) {
+                const saleIds = sales.map(s => s.id);
+                sales.forEach(s => {
+                    tInv++; tRev += parseInt(s.total_payment)||0;
+                    const h = new Date(s.created_at).getHours();
+                    cTrx[h]++; cRev[h] += parseInt(s.total_payment)||0;
+                });
+                if(details) {
+                    details.filter(d => saleIds.includes(d.sale_id)).forEach(d => {
+                        const p = (d.qty||0) * ((d.selling_price||0) - (d.capital_price||0));
+                        tProf += p;
+                        const parent = sales.find(s => s.id === d.sale_id);
+                        if(parent) cProf[new Date(parent.created_at).getHours()] += p;
+                    });
+                }
+            }
+
+            document.getElementById('dashTotalInv').innerText = tInv; 
+            document.getElementById('dashTotalRev').innerText = formatRp(tRev); 
+            document.getElementById('dashTotalProfit').innerText = formatRp(tProf); 
+            document.querySelectorAll('.dashDateText').forEach(el => el.innerText = formatDateIndo(dateStr));
+            initCharts(cTrx, cRev, cProf);
+
+            // Populate Activity Logs
+            const logBox = document.getElementById('activityLogContainer');
+            if(logs && logs.length > 0) {
+                logBox.innerHTML = logs.map(l => `<div class="flex flex-col border-b border-gray-50 pb-2"><span class="text-[10px] text-gray-400">${new Date(l.created_at).toLocaleTimeString('id-ID')} - ${l.username}</span><span class="text-sm text-gray-700 font-medium">${l.description}</span></div>`).join('');
+            } else {
+                logBox.innerHTML = '<p class="text-xs text-gray-400 text-center mt-4">Belum ada aktivitas</p>';
+            }
+        }
+
+        // USERS
+        function openUserModal(){ document.getElementById('formUser').reset(); document.getElementById('userId').value=''; openModal('modalUser'); }
+        async function loadUsers(){ showLoad(); const {data} = await supabase.from('users').select('*'); hideLoad(); if(data) document.getElementById('userTableBody').innerHTML = data.map(u => `<tr><td class="p-4 font-bold text-gray-800">${u.username}</td><td class="p-4"><span class="px-2 py-1 rounded text-xs font-bold ${u.role==='Admin'?'bg-red-50 text-primary':'bg-gray-100 text-gray-600'}">${u.role}</span></td><td class="p-4 text-center"><button onclick="deleteData('users','${u.id}',loadUsers)" class="text-red-400 hover:text-primary"><i class="fas fa-trash"></i></button></td></tr>`).join(''); }
+        async function saveUser(e){ e.preventDefault(); showLoad(); const id=document.getElementById('userId').value; const p={username:document.getElementById('userUname').value, password:document.getElementById('userPass').value, role:document.getElementById('userRole').value}; let res; if(id) res=await supabase.from('users').update(p).eq('id',id); else res=await supabase.from('users').insert([p]); hideLoad(); if(!res.error){ toast('User tersimpan'); closeModal('modalUser'); loadUsers(); logActivity('System',`Menambah/Update user ${p.username}`);} else toast(res.error.message,false); }
+
+        // PRODUCTS
+        function openProductModal(){ document.getElementById('formProduct').reset(); document.getElementById('prodId').value=''; document.getElementById('prodExistingImage').value=''; document.getElementById('prodPreview').classList.add('hidden'); openModal('modalProduct'); }
+        function previewImage(e){ const f=e.target.files[0]; if(f){const r=new FileReader(); r.onload=x=>{document.getElementById('prodPreview').src=x.target.result; document.getElementById('prodPreview').classList.remove('hidden'); document.getElementById('prodPreview').setAttribute('data-base64',x.target.result);}; r.readAsDataURL(f);} }
+        async function loadProducts(){ showLoad(); const {data} = await supabase.from('products').select('*'); hideLoad(); if(data) document.getElementById('productTableBody').innerHTML = data.map(p => `<tr><td class="p-4">${p.image_url?`<img src="${p.image_url}" class="w-10 h-10 object-cover rounded shadow">`:'-'}</td><td class="p-4 font-bold">${p.name}<br><span class="text-xs font-normal text-gray-400">${p.barcode||'-'}</span></td><td class="p-4 text-gray-600">${p.category}</td><td class="p-4 font-black ${p.qty<5?'text-primary':''}">${p.qty}</td><td class="p-4 text-gray-500">${formatRp(p.capital_price)}</td><td class="p-4 text-green-600 font-bold">${formatRp(p.selling_price)}</td><td class="p-4 text-center"><button onclick="deleteData('products','${p.id}',loadProducts)" class="text-red-400 hover:text-primary"><i class="fas fa-trash"></i></button></td></tr>`).join(''); }
+        async function saveProduct(e){ e.preventDefault(); showLoad(); const id=document.getElementById('prodId').value; const base64=document.getElementById('prodPreview').getAttribute('data-base64'); let imgUrl = document.getElementById('prodExistingImage').value; if(base64) imgUrl=base64; const p={name:document.getElementById('prodName').value, category:document.getElementById('prodCat').value, barcode:document.getElementById('prodBarcode').value, qty:document.getElementById('prodQty').value, capital_price:document.getElementById('prodModal').value, selling_price:document.getElementById('prodJual').value, image_url:imgUrl}; let res; if(id) res=await supabase.from('products').update(p).eq('id',id); else res=await supabase.from('products').insert([p]); hideLoad(); if(!res.error){ toast('Produk tersimpan'); closeModal('modalProduct'); refreshApp(); logActivity('Master',`Menyimpan produk ${p.name}`);} else toast(res.error.message,false); }
+
+        // CUSTOMERS
+        function openCustomerModal(){ document.getElementById('formCustomer').reset(); document.getElementById('custId').value=''; openModal('modalCustomer'); }
+        async function loadCustomers(){ showLoad(); const {data} = await supabase.from('customers').select('*'); hideLoad(); if(data) document.getElementById('customerTableBody').innerHTML = data.map(c => `<tr><td class="p-4 font-bold">${c.name}</td><td class="p-4">${c.phone||'-'}</td><td class="p-4">${c.address||'-'}</td><td class="p-4 text-center font-bold text-primary">${c.points}</td><td class="p-4 text-center"><button onclick="deleteData('customers','${c.id}',loadCustomers)" class="text-red-400 hover:text-primary"><i class="fas fa-trash"></i></button></td></tr>`).join(''); }
+        async function saveCustomer(e){ e.preventDefault(); showLoad(); const id=document.getElementById('custId').value; const p={name:document.getElementById('custName').value, phone:document.getElementById('custPhone').value, address:document.getElementById('custAddr').value}; let res; if(id) res=await supabase.from('customers').update(p).eq('id',id); else res=await supabase.from('customers').insert([p]); hideLoad(); if(!res.error){ toast('Pelanggan tersimpan'); closeModal('modalCustomer'); refreshApp(); logActivity('Master',`Menyimpan pelanggan ${p.name}`);} else toast(res.error.message,false); }
+
+        // PROMOS
+        function openPromoModal(){ document.getElementById('formPromo').reset(); document.getElementById('promoId').value=''; togglePromoType(); openModal('modalPromo'); }
+        function togglePromoType() { const t=document.getElementById('promoType').value; if(t==='nominal'){document.getElementById('promoTargetNominalWrap').classList.remove('hidden'); document.getElementById('promoTargetProdukWrap').classList.add('hidden');}else{document.getElementById('promoTargetNominalWrap').classList.add('hidden'); document.getElementById('promoTargetProdukWrap').classList.remove('hidden');} }
+        async function loadPromos(){ showLoad(); const {data} = await supabase.from('promos').select('*'); hideLoad(); if(data) document.getElementById('promoTableBody').innerHTML = data.map(p => { let tv=p.type==='nominal'?formatRp(p.target_value):allProducts.find(x=>x.id===p.target_value)?.name||p.target_value; return `<tr><td class="p-4 font-bold">${p.name}</td><td class="p-4 uppercase text-xs">${p.type}</td><td class="p-4 text-blue-600 font-semibold">${tv}</td><td class="p-4 text-center font-bold text-primary">+${p.reward_points} Poin</td><td class="p-4 text-center">${p.is_active?'<span class="text-green-500 font-bold">Aktif</span>':'<span class="text-red-500">Nonaktif</span>'}</td><td class="p-4 text-center"><button onclick="deleteData('promos','${p.id}',loadPromos)" class="text-red-400 hover:text-primary"><i class="fas fa-trash"></i></button></td></tr>`}).join(''); }
+        async function savePromo(e){ e.preventDefault(); showLoad(); const id=document.getElementById('promoId').value; const t=document.getElementById('promoType').value; const p={name:document.getElementById('promoName').value, type:t, target_value:t==='nominal'?document.getElementById('promoTargetNominal').value:document.getElementById('promoTargetProduk').value, reward_points:document.getElementById('promoReward').value}; let res; if(id) res=await supabase.from('promos').update(p).eq('id',id); else res=await supabase.from('promos').insert([p]); hideLoad(); if(!res.error){ toast('Promo tersimpan'); closeModal('modalPromo'); refreshApp(); logActivity('Master',`Menyimpan promo ${p.name}`);} else toast(res.error.message,false); }
+
+        async function deleteData(table, id, cb) { if(confirm('Warning: Data dihapus permanen. Lanjut?')){ showLoad(); await supabase.from(table).delete().eq('id',id); hideLoad(); toast('Terhapus',true); logActivity('System',`Hapus data dari ${table}`); cb(); } }
+
+        // SCANNER REUSABLE
+        function openScanner(targetId) { activeScannerTarget=targetId; document.getElementById('modalScanner').style.display='flex'; html5QrcodeScanner=new Html5QrcodeScanner("reader",{fps:10,qrbox:{width:250,height:250}},false); html5QrcodeScanner.render(txt=>{ closeScanner(); document.getElementById(activeScannerTarget).value=txt; if(activeScannerTarget==='posBarcode')handleBarcodeEnter({key:'Enter',target:document.getElementById('posBarcode')}); }); }
+        function closeScanner() { if(html5QrcodeScanner){html5QrcodeScanner.clear();html5QrcodeScanner=null;} document.getElementById('modalScanner').style.display='none'; }
+
+        // POS
+        function getProductOptionsHtml() { let o = '<option value="">Pilih Produk...</option>'; allProducts.filter(p=>p.qty>0).forEach(p=>o+=`<option value="${p.id}" data-price="${p.selling_price}" data-cap="${p.capital_price}" data-stock="${p.qty}">${p.name} (${p.qty})</option>`); return o; }
+        function addPosRow(prodId='') { posRows++; const tr = document.createElement('tr'); tr.id='posRow_'+posRows; tr.className='hover:bg-gray-50'; tr.innerHTML = `<td class="p-4 text-center text-gray-400 font-medium">${posRows}</td><td class="p-4"><select class="w-full border-none bg-transparent outline-none text-sm font-bold text-gray-700 pos-select cursor-pointer" onchange="posSelectChange(${posRows})">${getProductOptionsHtml()}</select></td><td class="p-4"><input type="number" min="1" value="1" class="w-full border rounded-lg p-2 outline-none text-center text-sm font-bold bg-white pos-qty" oninput="calculatePos()"></td><td class="p-4 text-right"><input type="text" class="w-full bg-transparent text-right text-sm text-gray-500 font-medium pos-price outline-none" readonly value="0"></td><td class="p-4 text-right font-black"><input type="text" class="w-full bg-transparent text-right text-sm text-gray-800 pos-sub outline-none" readonly value="0"></td><td class="p-4 text-center"><button onclick="removePosRow(${posRows})" class="text-red-400 hover:text-primary"><i class="fas fa-times-circle text-lg"></i></button></td>`; document.getElementById('posTableBody').appendChild(tr); if(prodId) { tr.querySelector('.pos-select').value=prodId; posSelectChange(posRows); } }
+        function removePosRow(id) { document.getElementById('posRow_'+id).remove(); calculatePos(); }
+        function posSelectChange(id) { const tr=document.getElementById('posRow_'+id), sel=tr.querySelector('.pos-select'), p=sel.options[sel.selectedIndex]?.dataset.price||0, s=sel.options[sel.selectedIndex]?.dataset.stock||0; tr.querySelector('.pos-price').value=p; tr.querySelector('.pos-qty').setAttribute('max',s); tr.querySelector('.pos-qty').value=1; calculatePos(); }
+        function calculatePos() { let ti=0, tn=0; document.querySelectorAll('#posTableBody tr').forEach(tr=>{ const sel=tr.querySelector('.pos-select'); if(!sel||!sel.value) return; const q=parseInt(tr.querySelector('.pos-qty').value)||0, p=parseInt(tr.querySelector('.pos-price').value)||0, sub=q*p; tr.querySelector('.pos-sub').value=sub; ti+=q; tn+=sub; }); document.getElementById('posTotalItem').innerText=ti; document.getElementById('posTotalNominal').innerText=formatRp(tn); let dRp = document.getElementById('posDiscountType').value==='%' ? (tn*(parseFloat(document.getElementById('posDiscount').value)||0)/100) : (parseFloat(document.getElementById('posDiscount').value)||0); document.getElementById('posTotalPayment').innerText=formatRp(Math.max(0, tn-dRp)); }
+        function handleBarcodeEnter(e) { if(e.key==='Enter') { const bc=e.target.value.trim(); e.target.value=''; if(!bc)return; const p=allProducts.find(x=>x.barcode===bc); if(p){ let f=false; document.querySelectorAll('#posTableBody tr').forEach(tr=>{ const sel=tr.querySelector('.pos-select'); if(sel&&sel.value===p.id){ const q=tr.querySelector('.pos-qty'); if(parseInt(q.value)<p.qty){q.value=parseInt(q.value)+1;calculatePos();} f=true; }}); if(!f)addPosRow(p.id); toast(p.name); } else toast("Barcode tidak dikenali",false); } }
+
+        async function processSale() {
+            const itm=[]; let err='';
+            document.querySelectorAll('#posTableBody tr').forEach(tr=>{ const sel=tr.querySelector('.pos-select'); if(sel&&sel.value){ const q=parseInt(tr.querySelector('.pos-qty').value), s=parseInt(sel.options[sel.selectedIndex].dataset.stock); if(q>s)err=`Stok ${sel.options[sel.selectedIndex].text} kurang!`; itm.push({product_id:sel.value,product_name:sel.options[sel.selectedIndex].text.split(' (')[0],qty:q,capital_price:sel.options[sel.selectedIndex].dataset.cap,selling_price:tr.querySelector('.pos-price').value,subtotal:tr.querySelector('.pos-sub').value}); }});
+            if(err)return toast(err,false); if(itm.length===0)return toast('Kosong',false);
+            
+            const custId = document.getElementById('posBuyer').value;
+            const bName = custId ? allCustomers.find(c=>c.id===custId)?.name : 'Walk-in';
+            const tNominal = parseInt(document.getElementById('posTotalNominal').innerText.replace(/\D/g,''))||0;
+            const py = {id:'INV-'+new Date().getTime(), date:document.getElementById('posDate').value, customer_id:custId||null, buyer_name:bName, total_nominal:tNominal, discount:document.getElementById('posDiscount').value, cashier:currentUser.username, total_payment:parseInt(document.getElementById('posTotalPayment').innerText.replace(/\D/g,''))||0};
+            
+            showLoad();
+            const resSale = await supabase.from('sales').insert([py]);
+            if(resSale.error) { hideLoad(); return toast(resSale.error.message, false); }
+            
+            const details = itm.map(i => ({sale_id:py.id, product_id:i.product_id, product_name:i.product_name, qty:i.qty, capital_price:i.capital_price, selling_price:i.selling_price, subtotal:i.subtotal}));
+            await supabase.from('sales_details').insert(details);
+            
+            // Deduct Stock
+            for(let i of itm) { const p=allProducts.find(x=>x.id===i.product_id); if(p) await supabase.from('products').update({qty: p.qty-i.qty}).eq('id',p.id); }
+
+            // Cek Promo & Tambah Poin jika ada Pelanggan
+            let gotPoints = 0;
+            if(custId) {
+                const activePromos = allPromos.filter(p=>p.is_active);
+                for(let promo of activePromos) {
+                    if(promo.type === 'nominal' && tNominal >= parseInt(promo.target_value)) gotPoints += parseInt(promo.reward_points);
+                    if(promo.type === 'produk') {
+                        const count = itm.filter(x=>x.product_id===promo.target_value).reduce((sum,cur)=>sum+cur.qty,0);
+                        if(count > 0) gotPoints += (count * parseInt(promo.reward_points));
+                    }
+                }
+                if(gotPoints > 0) {
+                    const cust = allCustomers.find(c=>c.id===custId);
+                    await supabase.from('customers').update({points: cust.points + gotPoints}).eq('id', custId);
+                    toast(`Pelanggan mendapat ${gotPoints} Poin!`);
+                }
+            }
+
+            hideLoad();
+            toast('Transaksi Sukses'); 
+            await logActivity('Sale', `Transaksi ${py.id} total ${formatRp(py.total_payment)}`);
+            printReceipt(py.id, py.date, py.cashier, py.buyer_name, itm, py.total_nominal, py.discount, py.total_payment); 
+            resetPos(); 
+            await refreshApp();
+        }
+        function resetPos(){ document.getElementById('posTableBody').innerHTML=''; posRows=0; document.getElementById('posBuyer').value=''; document.getElementById('posDiscount').value='0'; addPosRow(); calculatePos(); }
+        
+        function printReceipt(id, dt, ksr, plg, items, sub, disc, tot) { 
+            document.getElementById('print-details').innerHTML=`Tgl: ${dt}<br>Inv: <b>${id}</b><br>Ksr: ${ksr}<br>Plg: ${plg}`; 
+            document.getElementById('print-items').innerHTML=items.map(i=>`<tr><td>${i.product_name}</td><td style="text-align:center;">${i.qty}</td><td style="text-align:right;">${formatRp(i.subtotal)}</td></tr>`).join(''); 
+            document.getElementById('print-sub').innerText=formatRp(sub); document.getElementById('print-disc').innerText=disc; document.getElementById('print-total').innerText=formatRp(tot); 
+            document.body.classList.add('print-struk-mode');
+            setTimeout(()=>{ window.print(); document.body.classList.remove('print-struk-mode'); }, 500); 
+        }
+
+        // STOCK & EXPENSE
+        function filterStkProducts(){ const c=document.getElementById('stkCat').value, s=document.getElementById('stkProduct'); s.innerHTML='<option value="">Pilih Produk...</option>'; if(c){s.disabled=false;allProducts.filter(p=>p.category===c).forEach(p=>s.innerHTML+=`<option value="${p.id}">${p.name} (Sisa: ${p.qty})</option>`);}else s.disabled=true; }
+        async function saveStockIn(e){ e.preventDefault(); const p=document.getElementById('stkProduct'); if(!p.value)return; showLoad(); const q=parseInt(document.getElementById('stkQty').value); await supabase.from('stock_in').insert([{date:document.getElementById('stkDate').value, category:document.getElementById('stkCat').value, product_id:p.value, product_name:p.options[p.selectedIndex].text.split(' (')[0], qty_added:q, admin:currentUser.username}]); const prod=allProducts.find(x=>x.id===p.value); await supabase.from('products').update({qty:prod.qty+q}).eq('id',p.value); hideLoad(); toast('Stok ditambah'); e.target.reset(); filterStkProducts(); logActivity('Inventory',`Tambah stok ${prod.name} +${q}`); refreshApp(); }
+        function checkExpLainnya(){ document.getElementById('expCatLainnya').style.display=document.getElementById('expCat').value==='Lainnya'?'block':'none'; }
+        function calcExp(){ document.getElementById('expTotal').value=formatRp((parseInt(document.getElementById('expQty').value)||0)*(parseInt(document.getElementById('expNominal').value)||0)); }
+        async function saveExpense(e){ e.preventDefault(); const c=document.getElementById('expCat').value==='Lainnya'?document.getElementById('expCatLainnya').value:document.getElementById('expCat').value; showLoad(); await supabase.from('expenses').insert([{date:document.getElementById('expDate').value, category:c, vendor:document.getElementById('expVendor').value, qty:document.getElementById('expQty').value, nominal:document.getElementById('expNominal').value, total:document.getElementById('expTotal').value.replace(/\D/g,''), admin:currentUser.username}]); hideLoad(); toast('Pengeluaran dicatat'); e.target.reset(); calcExp(); checkExpLainnya(); logActivity('Finance',`Pengeluaran ${c} dicatat`); }
+        
+        // REPORTS
+        async function loadSales(){ showLoad(); const start=document.getElementById('filterSaleStart').value, end=document.getElementById('filterSaleEnd').value; const {data} = await supabase.from('sales').select('*').gte('date',start).lte('date',end); hideLoad(); if(data) document.getElementById('repSalesBody').innerHTML=data.map(s=>`<tr><td class="p-4 font-mono text-xs text-gray-500">${s.id}</td><td class="p-4 font-medium text-gray-700">${s.date}</td><td class="p-4 font-bold text-gray-800">${s.buyer_name}</td><td class="p-4 text-gray-500">${formatRp(s.total_nominal)}</td><td class="p-4">${s.discount}</td><td class="p-4 font-black text-green-600">${formatRp(s.total_payment)}</td></tr>`).join(''); }
+        async function loadFinance(){ showLoad(); const start=document.getElementById('filterFinStart').value, end=document.getElementById('filterFinEnd').value; const {data:s} = await supabase.from('sales').select('total_payment').gte('date',start).lte('date',end); const {data:e} = await supabase.from('expenses').select('*').gte('date',start).lte('date',end); hideLoad(); let ti=0,to=0; if(s) s.forEach(x=>ti+=parseInt(x.total_payment)||0); if(e) e.forEach(x=>to+=parseInt(x.total)||0); document.getElementById('finIn').innerText=formatRp(ti); document.getElementById('finOut').innerText=formatRp(to); document.getElementById('finNet').innerText=formatRp(ti-to); if(e) document.getElementById('repFinBody').innerHTML=e.map(x=>`<tr><td class="p-4 font-medium text-gray-700">${x.date}</td><td class="p-4 text-gray-600">${x.category}</td><td class="p-4 font-bold text-gray-800">${x.vendor}</td><td class="p-4 font-black text-red-500">${formatRp(x.total)}</td></tr>`).join(''); }
+        
+        async function loadSalesSummary() {
+            showLoad();
+            const start=document.getElementById('sumDateStart').value, end=document.getElementById('sumDateEnd').value;
+            const {data: sales} = await supabase.from('sales').select('id').gte('date',start).lte('date',end);
+            if(!sales) { hideLoad(); return; }
+            const saleIds = sales.map(x=>x.id);
+            const {data: details} = await supabase.from('sales_details').select('*');
+            hideLoad();
+            
+            let map = {};
+            if(details) {
+                details.filter(d=>saleIds.includes(d.sale_id)).forEach(d => {
+                    if(!map[d.product_id]) map[d.product_id] = {name:d.product_name, image:allProducts.find(p=>p.id===d.product_id)?.image_url||'', qty:0, rev:0, prof:0};
+                    const q=parseInt(d.qty)||0, sp=parseInt(d.selling_price)||0, cp=parseInt(d.capital_price)||0;
+                    map[d.product_id].qty += q; map[d.product_id].rev += (q*sp); map[d.product_id].prof += (q*(sp-cp));
+                });
+            }
+            window.summaryData = Object.values(map).sort((a,b)=>b.qty-a.qty);
+            
+            const container = document.getElementById('listSalesSummary');
+            if(window.summaryData.length === 0) { container.innerHTML = '<div class="p-8 text-center text-gray-400 font-medium">Tidak ada penjualan pada rentang tanggal ini.</div>'; return; }
+            container.innerHTML = window.summaryData.map(item => `<div class="flex items-center py-4 bg-white hover:bg-gray-50 transition px-4"><img src="${item.image||'https://ui-avatars.com/api/?name='+item.name.charAt(0)+'&background=f8f9fa&color=d90429'}" class="w-14 h-14 rounded-xl object-cover border shadow-sm"><div class="ml-4 flex-1"><h4 class="font-bold text-gray-800 text-[15px] mb-1">${item.name}</h4><div class="flex gap-6 text-sm"><div><p class="text-gray-400 text-[11px] uppercase tracking-wide">Keuntungan</p><p class="font-semibold text-gray-700">${formatRp(item.prof)}</p></div><div><p class="text-gray-400 text-[11px] uppercase tracking-wide">Pendapatan</p><p class="font-semibold text-gray-700">${formatRp(item.rev)}</p></div></div></div><div class="ml-2"><span class="border border-green-200 text-green-700 rounded-lg px-3 py-1 font-bold text-sm bg-green-50">${item.qty}</span></div></div>`).join('');
+        }
+
+        function printSummary() { document.body.classList.add('print-summary-mode'); window.print(); document.body.classList.remove('print-summary-mode'); }
+        function exportSummaryCSV() {
+            if(!window.summaryData || window.summaryData.length===0) return toast('Tidak ada data penjualan', false);
+            let csv = "Nama Produk,Qty Terjual,Pendapatan,Keuntungan\n";
+            window.summaryData.forEach(i => csv += `"${i.name.replace(/"/g, '""')}",${i.qty},${i.rev},${i.prof}\n`);
+            const blob = new Blob([csv], {type: "text/csv"}); const a = document.createElement("a");
+            a.download = `Ringkasan_${getToday()}.csv`; a.href = window.URL.createObjectURL(blob);
+            document.body.appendChild(a); a.click(); document.body.removeChild(a); toast('CSV diunduh');
+        }
+        function exportCSV(tableId) {
+            let csv = []; const rows = document.querySelectorAll(`#table${tableId} tr`);
+            for(let i=0; i<rows.length; i++) { let row=[], cols=rows[i].querySelectorAll("td:not(.no-print), th:not(.no-print)"); for(let j=0; j<cols.length; j++) row.push('"'+cols[j].innerText.replace(/"/g,'""')+'"'); csv.push(row.join(",")); }
+            const blob = new Blob([csv.join("\n")], {type: "text/csv"}); const a = document.createElement("a");
+            a.download = `${tableId}_${getToday()}.csv`; a.href = window.URL.createObjectURL(blob);
+            document.body.appendChild(a); a.click(); document.body.removeChild(a); toast('CSV diunduh');
+        }
+    </script>
+</body>
+</html>
