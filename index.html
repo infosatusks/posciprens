@@ -1225,10 +1225,10 @@ function printSelectedLabels(){
   if(!ids.length) return toast('Pilih minimal 1 produk terlebih dahulu!',false);
   const sel=allProducts.filter(p=>ids.includes(p.id));
   const labelsHtml=sel.map(p=>`
-    <div style="width:15cm;height:5cm;display:flex;flex-direction:column;border:1.5px solid #000;page-break-inside:avoid;overflow:hidden;margin-bottom:3mm">
-      <div style="background:#000;color:#fff;display:flex;align-items:center;justify-content:center;padding:8px;font-size:18px;font-weight:900;text-transform:uppercase;text-align:center;font-family:Arial,sans-serif;flex-shrink:0">${p.name}</div>
+    <div style="width:10cm;height:5cm;display:flex;flex-direction:column;border:1.5px solid #000;page-break-inside:avoid;overflow:hidden;margin-bottom:3mm">
+      <div style="background:#e11a2d;color:#fff;display:flex;align-items:center;justify-content:center;padding:8px;font-size:18px;font-weight:900;text-transform:uppercase;text-align:center;font-family:Arial,sans-serif;flex-shrink:0">${p.name}</div>
       <div style="flex:1;display:flex;align-items:center;justify-content:center;font-size:42px;font-weight:900;color:#000;font-family:Arial,sans-serif">${fRp(p.selling_price)}</div>
-      <div style="background:#000;color:#fff;text-align:center;font-size:13px;font-weight:700;padding:6px;letter-spacing:3px;font-family:Arial,sans-serif;flex-shrink:0">CILEGON PETSHOP</div>
+      <div style="background:#e11a2d;color:#fff;text-align:center;font-size:13px;font-weight:700;padding:6px;letter-spacing:3px;font-family:Arial,sans-serif;flex-shrink:0">CILEGON PETSHOP</div>
     </div>`).join('');
   const win=window.open('','_blank','width=800,height=600');
   win.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Label Harga</title><style>
