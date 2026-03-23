@@ -36,7 +36,15 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:#111827}
 .fade-in{animation:fadeIn .2s ease forwards}
 
 /* ===== SIDEBAR ===== */
-#sidebar{width:var(--sidebar);transition:transform .25s cubic-bezier(.4,0,.2,1)}
+#sidebar{width:var(--sidebar);transition:width .25s cubic-bezier(.4,0,.2,1), transform .25s cubic-bezier(.4,0,.2,1)}
+#sidebar.collapsed{width:56px}
+#sidebar.collapsed .sb-label{display:none}
+#sidebar.collapsed .sb-section-label{display:none}
+#sidebar.collapsed .menu-item{justify-content:center;padding:10px 0}
+#sidebar.collapsed .menu-item i{width:auto;margin:0}
+#sidebar.collapsed #adminNav .sub-menu{display:none}
+#sidebar.collapsed #userFooter{display:none}
+#sidebar.collapsed .sb-logo-text{display:none}
 .menu-item{transition:all .15s;border-radius:10px;margin-bottom:2px;display:flex;align-items:center;gap:10px;padding:10px 12px;font-size:14px;font-weight:500;color:#4b5563;cursor:pointer;text-decoration:none}
 .menu-item:hover,.menu-item.active{background:#fef2f5;color:var(--p)}
 .menu-item:hover i,.menu-item.active i{color:var(--p)}
@@ -159,7 +167,7 @@ input:checked+.slider:before{transform:translateX(18px)}
 </div>
 
 <!-- ==================== LOGIN ==================== -->
-<div id="loginScreen" class="fixed inset-0 z-50 flex items-center justify-end" style="background:url('login.jpg') center/cover no-repeat;background-color:#111">
+<div id="loginScreen" class="fixed inset-0 z-50 flex items-center justify-end" style="background:url('login.jpg') center/contain no-repeat;background-color:#f0f0f0">
   <!-- Dark overlay on left for readability -->
   <div class="absolute inset-0" style="background:linear-gradient(to right, rgba(0,0,0,.15) 0%, rgba(0,0,0,.05) 50%, rgba(0,0,0,.4) 100%)"></div>
   <!-- Form box — right side -->
@@ -204,58 +212,57 @@ input:checked+.slider:before{transform:translateX(18px)}
   <aside id="sidebar" class="fixed md:relative h-full bg-white border-r flex flex-col z-40 flex-shrink-0 -translate-x-full md:translate-x-0" style="border-color:var(--border)">
 
     <!-- Sidebar Header with hamburger INSIDE -->
-    <div class="flex items-center justify-between p-4 border-b flex-shrink-0" style="border-color:var(--border)">
-      <div class="flex items-center gap-3 min-w-0">
-        <div class="w-9 h-9 rounded-xl overflow-hidden bg-gray-100 flex-shrink-0 border" style="border-color:var(--border)">
-          <img src="logo.png" class="w-full h-full object-cover" onerror="this.style.display='none'">
+    <div class="flex items-center justify-between p-3 border-b flex-shrink-0" style="border-color:var(--border);min-height:56px">
+      <div class="flex items-center gap-3 min-w-0 flex-1">
+        <div class="w-8 h-8 rounded-xl overflow-hidden bg-gray-100 flex-shrink-0 border" style="border-color:var(--border)">
+          <img src="logo.jpg" class="w-full h-full object-cover" onerror="this.style.display='none'">
         </div>
-        <div class="min-w-0">
+        <div class="min-w-0 sb-logo-text">
           <p class="font-bold text-sm truncate leading-tight">Cilegon Petshop</p>
           <p id="topRole" class="text-xs font-semibold truncate" style="color:var(--p)">—</p>
         </div>
       </div>
-      <!-- Hamburger inside sidebar -->
-      <button onclick="toggleSidebar()" class="w-8 h-8 rounded-lg flex items-center justify-center hover:bg-gray-100 transition text-gray-500 flex-shrink-0" title="Tutup menu">
+      <button onclick="toggleSidebar()" class="w-8 h-8 rounded-lg flex items-center justify-center hover:bg-gray-100 transition text-gray-500 flex-shrink-0" title="Sembunyikan/tampilkan menu">
         <i class="fas fa-bars text-sm"></i>
       </button>
     </div>
 
     <!-- Nav -->
     <nav class="flex-1 overflow-y-auto p-3" id="sidebarNav">
-      <a href="#" onclick="nav('dashboard')" id="menu-dashboard" class="menu-item"><i class="fas fa-chart-line"></i>Dashboard</a>
+      <a href="#" onclick="nav('dashboard')" id="menu-dashboard" class="menu-item"><i class="fas fa-chart-line"></i><span class="sb-label">Dashboard</span></a>
 
-      <div class="pt-4 pb-1 px-2 text-[10px] font-bold text-gray-400 uppercase tracking-widest">Transaksi</div>
-      <a href="#" onclick="nav('pos')" id="menu-pos" class="menu-item"><i class="fas fa-cash-register"></i>Transaksi</a>
-      <a href="#" onclick="nav('stockin')" id="menu-stockin" class="menu-item"><i class="fas fa-box-open"></i>Tambah Stok</a>
-      <a href="#" onclick="nav('expense')" id="menu-expense" class="menu-item"><i class="fas fa-money-bill-wave"></i>Pengeluaran</a>
+      <div class="pt-4 pb-1 px-2 text-[10px] font-bold text-gray-400 uppercase tracking-widest sb-section-label">Transaksi</div>
+      <a href="#" onclick="nav('pos')" id="menu-pos" class="menu-item"><i class="fas fa-cash-register"></i><span class="sb-label">Transaksi</span></a>
+      <a href="#" onclick="nav('stockin')" id="menu-stockin" class="menu-item"><i class="fas fa-box-open"></i><span class="sb-label">Tambah Stok</span></a>
+      <a href="#" onclick="nav('expense')" id="menu-expense" class="menu-item"><i class="fas fa-money-bill-wave"></i><span class="sb-label">Pengeluaran</span></a>
 
-      <div class="pt-4 pb-1 px-2 text-[10px] font-bold text-gray-400 uppercase tracking-widest">Audit</div>
-      <a href="#" onclick="nav('laporanMenu')" id="menu-laporanMenu" class="menu-item"><i class="fas fa-file-invoice"></i>Laporan</a>
-      <a href="#" onclick="nav('stockopname')" id="menu-stockopname" class="menu-item"><i class="fas fa-clipboard-list"></i>Stock Opname</a>
-      <a href="#" onclick="nav('cashopname')" id="menu-cashopname" class="menu-item"><i class="fas fa-coins"></i>Cash Opname</a>
+      <div class="pt-4 pb-1 px-2 text-[10px] font-bold text-gray-400 uppercase tracking-widest sb-section-label">Audit</div>
+      <a href="#" onclick="nav('laporanMenu')" id="menu-laporanMenu" class="menu-item"><i class="fas fa-file-invoice"></i><span class="sb-label">Laporan</span></a>
+      <a href="#" onclick="nav('stockopname')" id="menu-stockopname" class="menu-item"><i class="fas fa-clipboard-list"></i><span class="sb-label">Stock Opname</span></a>
+      <a href="#" onclick="nav('cashopname')" id="menu-cashopname" class="menu-item"><i class="fas fa-coins"></i><span class="sb-label">Cash Opname</span></a>
 
-      <div class="pt-4 pb-1 px-2 text-[10px] font-bold text-gray-400 uppercase tracking-widest">Pelanggan</div>
-      <a href="#" onclick="nav('loyalty')" id="menu-loyalty" class="menu-item"><i class="fas fa-medal"></i>Program Loyalty</a>
+      <div class="pt-4 pb-1 px-2 text-[10px] font-bold text-gray-400 uppercase tracking-widest sb-section-label">Pelanggan</div>
+      <a href="#" onclick="nav('loyalty')" id="menu-loyalty" class="menu-item"><i class="fas fa-medal"></i><span class="sb-label">Program Loyalty</span></a>
 
       <div id="adminNav">
-        <div class="pt-4 pb-1 px-2 text-[10px] font-bold text-gray-400 uppercase tracking-widest">Sistem</div>
+        <div class="pt-4 pb-1 px-2 text-[10px] font-bold text-gray-400 uppercase tracking-widest sb-section-label">Sistem</div>
         <button onclick="toggleSub('subSettings',this)" class="menu-item w-full justify-between">
-          <span class="flex items-center gap-2.5"><i class="fas fa-cog w-4 text-center text-sm text-gray-400"></i>Settings</span>
-          <i class="fas fa-chevron-right text-[10px] text-gray-400 chevron-icon transition-transform"></i>
+          <span class="flex items-center gap-2.5"><i class="fas fa-cog w-4 text-center text-sm text-gray-400"></i><span class="sb-label">Settings</span></span>
+          <i class="fas fa-chevron-right text-[10px] text-gray-400 chevron-icon transition-transform sb-label"></i>
         </button>
         <div id="subSettings" class="sub-menu pl-7">
-          <a href="#" onclick="nav('users')" id="menu-users" class="menu-item text-sm py-2"><i class="fas fa-user-shield"></i>Users & Akses</a>
-          <a href="#" onclick="nav('categories')" id="menu-categories" class="menu-item text-sm py-2"><i class="fas fa-tags"></i>Kategori</a>
-          <a href="#" onclick="nav('products')" id="menu-products" class="menu-item text-sm py-2"><i class="fas fa-boxes"></i>Produk & Label</a>
-          <a href="#" onclick="nav('customers')" id="menu-customers" class="menu-item text-sm py-2"><i class="fas fa-users"></i>Data Pelanggan</a>
-          <a href="#" onclick="nav('loyaltysettings')" id="menu-loyaltysettings" class="menu-item text-sm py-2"><i class="fas fa-star"></i>Setting Loyalty</a>
-          <a href="#" onclick="nav('printsettings')" id="menu-printsettings" class="menu-item text-sm py-2"><i class="fas fa-receipt"></i>Setting Struk</a>
+          <a href="#" onclick="nav('users')" id="menu-users" class="menu-item text-sm py-2"><i class="fas fa-user-shield"></i><span class="sb-label">Users & Akses</span></a>
+          <a href="#" onclick="nav('categories')" id="menu-categories" class="menu-item text-sm py-2"><i class="fas fa-tags"></i><span class="sb-label">Kategori</span></a>
+          <a href="#" onclick="nav('products')" id="menu-products" class="menu-item text-sm py-2"><i class="fas fa-boxes"></i><span class="sb-label">Produk & Label</span></a>
+          <a href="#" onclick="nav('customers')" id="menu-customers" class="menu-item text-sm py-2"><i class="fas fa-users"></i><span class="sb-label">Data Pelanggan</span></a>
+          <a href="#" onclick="nav('loyaltysettings')" id="menu-loyaltysettings" class="menu-item text-sm py-2"><i class="fas fa-star"></i><span class="sb-label">Setting Loyalty</span></a>
+          <a href="#" onclick="nav('printsettings')" id="menu-printsettings" class="menu-item text-sm py-2"><i class="fas fa-receipt"></i><span class="sb-label">Setting Struk</span></a>
         </div>
       </div>
     </nav>
 
     <!-- User footer -->
-    <div class="p-4 border-t flex-shrink-0" style="border-color:var(--border)">
+    <div id="userFooter" class="p-4 border-t flex-shrink-0" style="border-color:var(--border)">
       <div class="flex items-center gap-3 mb-3">
         <div class="w-8 h-8 rounded-lg flex items-center justify-center text-sm font-black text-white flex-shrink-0" style="background:var(--p)" id="userAvatarSb">A</div>
         <div class="min-w-0 flex-1">
@@ -867,8 +874,8 @@ function toggleSidebar(){
     const hidden = sb.classList.contains('-translate-x-full');
     hidden ? openSidebar() : closeSidebar();
   } else {
-    // Desktop: collapse/expand sidebar
-    sb.style.display = (sb.style.display === 'none') ? 'flex' : 'none';
+    // Desktop: toggle collapsed icon-only mode
+    sb.classList.toggle('collapsed');
   }
 }
 window.addEventListener('resize', ()=>{
