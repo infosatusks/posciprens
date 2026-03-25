@@ -1022,7 +1022,6 @@ async function refreshApp(){
     db.from('products').select('*').range(0, 9999),
     db.from('categories').select('*').order('name').range(0, 999),
     db.from('customers').select('*').order('created_at',{ascending:true}).range(0, 9999)
-]);
   ]);
   if(rp.data) allProducts=rp.data;
   if(rc.data) allCategories=rc.data;
