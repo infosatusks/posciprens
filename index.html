@@ -1175,7 +1175,7 @@ body{font-family:'Roboto',sans-serif;background:#f7f0f4;display:flex;justify-con
 
 /* ===== FRONT ===== */
 .card-front{background:#fff}
-.card-front .doodle-pattern{opacity:.18}
+.card-front > .doodle-pattern{display:none}
 /* Pink solid block left side — like farmacia style */
 .front-pink-block{position:absolute;left:0;top:0;width:38mm;height:100%;background:linear-gradient(160deg,#cc0e74 0%,#e8559a 100%);z-index:1;overflow:hidden}
 .front-pink-block .doodle-img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:.18;mix-blend-mode:luminosity}
@@ -1219,8 +1219,8 @@ body{font-family:'Roboto',sans-serif;background:#f7f0f4;display:flex;justify-con
       </div>
       <!-- Member since -->
       <div>
-        <div style="font-size:6px;color:rgba(255,255,255,.6);text-transform:uppercase;letter-spacing:1px;margin-bottom:1px">Member Sejak</div>
-        <div style="font-size:8px;font-weight:700;color:#fff">${joinDate}</div>
+        <div style="font-size:7px;font-weight:800;color:rgba(255,255,255,.85);text-transform:uppercase;letter-spacing:1px;margin-bottom:1px">Member Sejak</div>
+          <div style="font-size:9px;font-weight:900;color:#fff">${joinDate}</div>
       </div>
     </div>
 
@@ -1235,8 +1235,8 @@ body{font-family:'Roboto',sans-serif;background:#f7f0f4;display:flex;justify-con
       </div>
       <!-- Bottom: HP -->
       <div style="border-top:1px solid #f0e0ea;padding-top:2mm">
-        <div style="font-size:6px;color:#bbb;text-transform:uppercase;letter-spacing:1px;margin-bottom:1px">No HP</div>
-        <div style="font-size:8.5px;font-weight:600;color:#555">${c.phone||'—'}</div>
+        <div style="font-size:7px;font-weight:800;color:#888;text-transform:uppercase;letter-spacing:1px;margin-bottom:1px">No HP</div>
+        <div style="font-size:9px;font-weight:700;color:#333">${c.phone||'—'}</div>
       </div>
     </div>
   </div>
@@ -1251,16 +1251,11 @@ body{font-family:'Roboto',sans-serif;background:#f7f0f4;display:flex;justify-con
       <!-- QR Code -->
       <div style="display:flex;flex-direction:column;align-items:center;gap:2mm">
         <div id="qrcode" style="background:#fff;padding:2mm;border-radius:2mm;box-shadow:0 2px 8px rgba(0,0,0,.1)"></div>
-        <div style="font-size:6px;color:#cc0e74;font-weight:700;text-transform:uppercase;letter-spacing:1px">Scan Profil Member</div>
+        <div style="font-family:'Roboto Mono',monospace;font-size:7px;font-weight:700;color:#cc0e74;letter-spacing:1.5px">${c.unique_code||'—'}</div>
       </div>
-      <!-- Logo + nama -->
-      <div style="display:flex;flex-direction:column;align-items:center;gap:2.5mm">
-        <img src="${logoSrc}" style="height:14mm;width:14mm;object-fit:contain" onerror="this.style.display='none'">
-        <div style="text-align:center">
-          <div style="font-size:10px;font-weight:900;color:#cc0e74;line-height:1.3">Cilegon</div>
-          <div style="font-size:10px;font-weight:900;color:#c9960c;line-height:1.3">Petshop</div>
-        </div>
-        <div style="font-family:'Roboto Mono',monospace;font-size:6.5px;color:#ccc;letter-spacing:1.5px">${c.unique_code||'—'}</div>
+      <!-- Logo saja, sejajar QR -->
+      <div style="display:flex;align-items:center;justify-content:center">
+        <img src="${logoSrc}" style="height:22mm;width:22mm;object-fit:contain" onerror="this.style.display='none'">
       </div>
     </div>
   </div>
