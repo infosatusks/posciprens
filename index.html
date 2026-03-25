@@ -1126,6 +1126,7 @@ function printMemberCard(custId){
   const patternB64=btoa(patternSvg);
 
   const win=window.open('','_blank','width=900,height=700');
+  
  win.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Kartu Member - ${c.name}</title>
 <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;700;900&family=Roboto+Mono:wght@400;700&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"><\/script>
@@ -1241,7 +1242,7 @@ new QRCode(document.getElementById('qrcode'),{
 window.onload=()=>setTimeout(()=>window.print(),1200);
 <\/script>
 </body></html>`);
-  win.document.close();
+  win.document.close();}
 
 // ===== LOYALTY SETTINGS =====
 function loadLoyaltySettings(){const s=localStorage.getItem('cp_loyalty');if(s)lSet=Object.assign(lSet,JSON.parse(s));}
