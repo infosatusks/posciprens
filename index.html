@@ -186,7 +186,7 @@ input:checked+.slider:before{transform:translateX(18px)}
                 <p class="font-mono font-black text-lg text-white tracking-widest" id="mpCode">—</p>
               </div>
               <div class="w-10 h-10 rounded-xl overflow-hidden bg-white/20 flex-shrink-0">
-                <img src="logo.png" class="w-full h-full object-contain p-1" onerror="this.src='logo.jpg'">
+                <img src="logo.jpg" class="w-full h-full object-contain p-1" onerror="this.src='logo.jpg'">
               </div>
             </div>
             <p class="font-black text-2xl text-white uppercase tracking-wide mb-1" id="mpName">—</p>
@@ -1147,7 +1147,7 @@ function printMemberCard(custId){
   const expDate=c.expired_at?new Date(c.expired_at).toLocaleDateString('id-ID',{day:'2-digit',month:'long',year:'numeric'}):'Seumur Hidup';
 
   // Get logo base64 from rSet or use default
-  const logoSrc=rSet.logo||'logo.png';
+  const logoSrc=rSet.logo||'logo.jpg';
 
   // Hex pattern SVG for card background
   const patternSvg=`<svg xmlns='http://www.w3.org/2000/svg' width='60' height='52'><polygon points='30,2 58,17 58,47 30,62 2,47 2,17' fill='none' stroke='rgba(255,255,255,0.06)' stroke-width='1'/></svg>`;
