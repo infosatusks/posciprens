@@ -1126,75 +1126,106 @@ function printMemberCard(custId){
   const patternB64=btoa(patternSvg);
 
   const win=window.open('','_blank','width=900,height=700');
-  win.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Kartu Member - ${c.name}</title>
-<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;700;900&family=DM+Mono:wght@400;700&display=swap" rel="stylesheet">
+ win.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Kartu Member - ${c.name}</title>
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;700;900&family=Roboto+Mono:wght@400;700&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"><\/script>
 <style>
 @page{margin:0;size:landscape}
 *{box-sizing:border-box;margin:0;padding:0}
-body{font-family:'DM Sans',sans-serif;background:#1a0a12;display:flex;justify-content:center;align-items:flex-start;gap:20px;padding:40px;min-height:100vh;flex-wrap:wrap}
+body{font-family:'Roboto',sans-serif;background:#f5f5f5;display:flex;justify-content:center;align-items:flex-start;gap:24px;padding:40px;min-height:100vh;flex-wrap:wrap}
 .card-wrap{display:flex;flex-direction:column;align-items:center;gap:8px}
 .card-label{font-size:10px;color:#cc0e74;font-weight:700;text-transform:uppercase;letter-spacing:2px}
-/* Credit card size: 85.6mm x 54mm */
-.card{width:85.6mm;height:54mm;border-radius:4mm;position:relative;overflow:hidden;page-break-inside:avoid;display:flex;flex-direction:column}
-/* FRONT */
-.card-front{background:linear-gradient(135deg,#0d0d1a 0%,#1a0d1f 50%,#0d0d1a 100%);border:1px solid rgba(204,14,116,.4)}
-.card-front::before{content:'';position:absolute;inset:0;background-image:url("data:image/svg+xml;base64,${patternB64}");opacity:1}
-.card-front::after{content:'';position:absolute;right:-20mm;top:-10mm;width:50mm;height:50mm;background:radial-gradient(circle,rgba(204,14,116,.25) 0%,transparent 70%)}
-/* BACK */
-.card-back{background:linear-gradient(135deg,#0d0d1a 0%,#150a1a 100%);border:1px solid rgba(204,14,116,.3);justify-content:center;align-items:center}
-.gold{color:#d4af37}
-.accent{color:#cc0e74}
-.accent-line{width:20mm;height:2px;background:linear-gradient(to right,#cc0e74,#d4af37);border-radius:1px}
+.card{width:85.6mm;height:54mm;border-radius:4mm;position:relative;overflow:hidden;page-break-inside:avoid;display:flex;flex-direction:column;box-shadow:0 8px 32px rgba(204,14,116,.25)}
+
+/* PAW PATTERN via repeating SVG */
+.paw-pattern{position:absolute;inset:0;opacity:.07;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='48' height='48' viewBox='0 0 48 48'%3E%3Cellipse cx='12' cy='10' rx='5' ry='6' fill='%23fff'/%3E%3Cellipse cx='24' cy='7' rx='4' ry='5' fill='%23fff'/%3E%3Cellipse cx='35' cy='10' rx='5' ry='6' fill='%23fff'/%3E%3Cellipse cx='7' cy='20' rx='4' ry='5' fill='%23fff'/%3E%3Cellipse cx='24' cy='30' rx='11' ry='13' fill='%23fff'/%3E%3C/svg%3E");background-size:48px 48px}
+
+/* FRONT — gradient kiri ke kanan: magenta → putih */
+.card-front{background:linear-gradient(120deg,#cc0e74 0%,#e8589a 40%,#f9d4e8 75%,#fff 100%)}
+.card-front .paw-pattern{opacity:.1}
+
+/* BACK — gradient terbalik */
+.card-back{background:linear-gradient(120deg,#fff 0%,#f9d4e8 25%,#e8589a 60%,#cc0e74 100%);justify-content:center;align-items:center}
+
+.gold{color:#c9960c;font-weight:700}
+.gold-light{color:#f0c040}
+.white{color:#fff}
+.accent-bar{width:18mm;height:2.5px;background:linear-gradient(to right,#fff,#f0c040);border-radius:2px}
+
 .front-inner{position:relative;z-index:1;padding:5mm 6mm;display:flex;flex-direction:column;height:100%}
 .back-inner{position:relative;z-index:1;width:100%;height:100%;display:flex;align-items:center;justify-content:space-between;padding:5mm 6mm}
-@media print{body{background:#fff;padding:10mm}@page{margin:5mm;size:landscape}}
+
+@media print{
+  body{background:#fff;padding:8mm}
+  @page{margin:4mm;size:landscape}
+  .card{box-shadow:none;border:0.5pt solid #ddd}
+}
 </style></head>
 <body>
+
+<!-- DEPAN -->
 <div class="card-wrap">
   <div class="card-label">Depan</div>
   <div class="card card-front">
+    <div class="paw-pattern"></div>
     <div class="front-inner">
-      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:4mm">
+      <!-- Header -->
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:3.5mm">
         <div style="display:flex;align-items:center;gap:2.5mm">
-          <img src="${logoSrc}" style="height:8mm;width:8mm;object-fit:contain;border-radius:1.5mm" onerror="this.style.display='none'">
-          <span style="font-size:9px;font-weight:700;color:#fff;opacity:.8">Cilegon Petshop</span>
+          <img src="${logoSrc}" style="height:8mm;width:8mm;object-fit:contain;border-radius:1.5mm;background:rgba(255,255,255,.6);padding:1px" onerror="this.style.display='none'">
+          <div>
+            <div style="font-size:8px;font-weight:700;color:rgba(255,255,255,.9);letter-spacing:.5px">Cilegon Petshop</div>
+            <div style="font-size:7px;color:rgba(255,255,255,.65);letter-spacing:1px;text-transform:uppercase">Loyalty Card</div>
+          </div>
         </div>
         <div style="text-align:right">
-          <div style="font-size:7px;color:rgba(255,255,255,.4);text-transform:uppercase;letter-spacing:1px">Member</div>
-          <div style="font-size:8px;font-weight:700;color:#d4af37">LOYALTY CARD</div>
+          <div style="font-size:7px;color:rgba(255,255,255,.6);text-transform:uppercase;letter-spacing:1px">Member Sejak</div>
+          <div style="font-size:8px;font-weight:700;color:#fff">${joinDate}</div>
         </div>
       </div>
-      <div class="accent-line" style="margin-bottom:3mm"></div>
+
+      <div class="accent-bar" style="margin-bottom:3.5mm"></div>
+
+      <!-- Name & Code -->
       <div style="flex:1;display:flex;flex-direction:column;justify-content:center">
-        <div style="font-size:7px;color:rgba(255,255,255,.4);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:1mm">Nama Member</div>
-        <div style="font-size:14px;font-weight:900;color:#fff;letter-spacing:.5px;margin-bottom:3mm;text-transform:uppercase">${c.name}</div>
-        <div style="font-family:'DM Mono',monospace;font-size:11px;font-weight:700;color:#cc0e74;letter-spacing:2px;margin-bottom:3mm">${c.unique_code||'—'}</div>
+        <div style="font-size:16px;font-weight:900;color:#fff;letter-spacing:.5px;text-transform:uppercase;margin-bottom:2mm;text-shadow:0 1px 4px rgba(0,0,0,.2)">${c.name}</div>
+        <div style="font-family:'Roboto Mono',monospace;font-size:12px;font-weight:700;color:#f0c040;letter-spacing:2.5px">${c.unique_code||'—'}</div>
       </div>
-      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:2mm;border-top:1px solid rgba(255,255,255,.1);padding-top:2mm">
-        <div><div style="font-size:6px;color:rgba(255,255,255,.35);text-transform:uppercase;letter-spacing:1px">No HP</div><div style="font-size:8px;color:#fff;font-weight:600">${c.phone||'—'}</div></div>
-        <div><div style="font-size:6px;color:rgba(255,255,255,.35);text-transform:uppercase;letter-spacing:1px">Bergabung</div><div style="font-size:7.5px;color:#fff;font-weight:600">${joinDate}</div></div>
-        <div><div style="font-size:6px;color:rgba(255,255,255,.35);text-transform:uppercase;letter-spacing:1px">Berlaku s/d</div><div style="font-size:7.5px;font-weight:700;color:#d4af37">${expDate}</div></div>
+
+      <!-- Footer info -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:2mm;border-top:1px solid rgba(255,255,255,.3);padding-top:2mm">
+        <div>
+          <div style="font-size:6px;color:rgba(255,255,255,.6);text-transform:uppercase;letter-spacing:1px">No HP</div>
+          <div style="font-size:8.5px;color:#fff;font-weight:600">${c.phone||'—'}</div>
+        </div>
+        <div style="text-align:right">
+          <div style="font-size:6px;color:rgba(255,255,255,.6);text-transform:uppercase;letter-spacing:1px">Poin</div>
+          <div style="font-size:10px;font-weight:900;color:#f0c040">${c.points||0} Poin</div>
+        </div>
       </div>
     </div>
   </div>
 </div>
 
+<!-- BELAKANG -->
 <div class="card-wrap">
   <div class="card-label">Belakang</div>
   <div class="card card-back">
+    <div class="paw-pattern"></div>
     <div class="back-inner">
-      <div style="display:flex;flex-direction:column;align-items:center;flex:1;justify-content:center;gap:2mm">
-        <div id="qrcode" style="background:#fff;padding:2mm;border-radius:2mm;display:inline-block"></div>
-        <div style="font-size:7px;color:rgba(255,255,255,.4);text-align:center;text-transform:uppercase;letter-spacing:1px">Scan untuk profil member</div>
+      <!-- QR Code -->
+      <div style="display:flex;flex-direction:column;align-items:center;gap:2mm">
+        <div id="qrcode" style="background:#fff;padding:2.5mm;border-radius:2mm;box-shadow:0 2px 8px rgba(0,0,0,.15)"></div>
+        <div style="font-size:6.5px;color:#cc0e74;text-align:center;font-weight:700;text-transform:uppercase;letter-spacing:.8px">Profil Member</div>
       </div>
-      <div style="display:flex;flex-direction:column;align-items:flex-end;gap:2mm;min-width:25mm">
-        <img src="${logoSrc}" style="height:10mm;width:10mm;object-fit:contain" onerror="this.style.display='none'">
+      <!-- Right side info -->
+      <div style="display:flex;flex-direction:column;align-items:flex-end;gap:3mm;min-width:28mm">
+        <img src="${logoSrc}" style="height:11mm;width:11mm;object-fit:contain" onerror="this.style.display='none'">
         <div style="text-align:right">
-          <div style="font-size:9px;font-weight:900;color:#fff">Cilegon</div>
-          <div style="font-size:9px;font-weight:900;color:#cc0e74">Petshop</div>
+          <div style="font-size:11px;font-weight:900;color:#cc0e74;line-height:1.2">Cilegon</div>
+          <div style="font-size:11px;font-weight:900;color:#c9960c;line-height:1.2">Petshop</div>
         </div>
-        <div style="font-family:'DM Mono',monospace;font-size:7px;color:#d4af37;letter-spacing:1px">${c.unique_code||'—'}</div>
+        <div style="font-family:'Roboto Mono',monospace;font-size:7.5px;font-weight:700;color:#cc0e74;letter-spacing:1.5px">${c.unique_code||'—'}</div>
       </div>
     </div>
   </div>
@@ -1203,15 +1234,14 @@ body{font-family:'DM Sans',sans-serif;background:#1a0a12;display:flex;justify-co
 <script>
 new QRCode(document.getElementById('qrcode'),{
   text:'${profileUrl}',
-  width:80,height:80,
-  colorDark:'#000000',colorLight:'#ffffff',
+  width:76,height:76,
+  colorDark:'#cc0e74',colorLight:'#ffffff',
   correctLevel:QRCode.CorrectLevel.M
 });
 window.onload=()=>setTimeout(()=>window.print(),1200);
 <\/script>
 </body></html>`);
   win.document.close();
-}
 
 // ===== LOYALTY SETTINGS =====
 function loadLoyaltySettings(){const s=localStorage.getItem('cp_loyalty');if(s)lSet=Object.assign(lSet,JSON.parse(s));}
