@@ -1133,33 +1133,40 @@ function printMemberCard(custId){
 <style>
 @page{margin:0;size:landscape}
 *{box-sizing:border-box;margin:0;padding:0}
-body{font-family:'Roboto',sans-serif;background:#f5f5f5;display:flex;justify-content:center;align-items:flex-start;gap:24px;padding:40px;min-height:100vh;flex-wrap:wrap}
+body{font-family:'Roboto',sans-serif;background:#f7f0f4;display:flex;justify-content:center;align-items:flex-start;gap:28px;padding:44px;min-height:100vh;flex-wrap:wrap}
 .card-wrap{display:flex;flex-direction:column;align-items:center;gap:8px}
 .card-label{font-size:10px;color:#cc0e74;font-weight:700;text-transform:uppercase;letter-spacing:2px}
-.card{width:85.6mm;height:54mm;border-radius:4mm;position:relative;overflow:hidden;page-break-inside:avoid;display:flex;flex-direction:column;box-shadow:0 8px 32px rgba(204,14,116,.25)}
+.card{width:85.6mm;height:54mm;border-radius:4mm;position:relative;overflow:hidden;page-break-inside:avoid;display:flex;flex-direction:column;box-shadow:0 8px 28px rgba(204,14,116,.2)}
 
-/* PAW PATTERN via repeating SVG */
-.paw-pattern{position:absolute;inset:0;opacity:.07;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='48' height='48' viewBox='0 0 48 48'%3E%3Cellipse cx='12' cy='10' rx='5' ry='6' fill='%23fff'/%3E%3Cellipse cx='24' cy='7' rx='4' ry='5' fill='%23fff'/%3E%3Cellipse cx='35' cy='10' rx='5' ry='6' fill='%23fff'/%3E%3Cellipse cx='7' cy='20' rx='4' ry='5' fill='%23fff'/%3E%3Cellipse cx='24' cy='30' rx='11' ry='13' fill='%23fff'/%3E%3C/svg%3E");background-size:48px 48px}
+/* ===== PET DOODLE PATTERN (inline SVG tile) ===== */
+.doodle-pattern{
+  position:absolute;inset:0;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='80' height='80' viewBox='0 0 80 80'%3E%3C!-- paw --%3E%3Cellipse cx='16' cy='18' rx='4' ry='4.5' fill='none' stroke='%23cc0e74' stroke-width='1.5'/%3E%3Cellipse cx='10' cy='13' rx='2.2' ry='2.5' fill='none' stroke='%23cc0e74' stroke-width='1.3'/%3E%3Cellipse cx='22' cy='13' rx='2.2' ry='2.5' fill='none' stroke='%23cc0e74' stroke-width='1.3'/%3E%3Cellipse cx='6' cy='19' rx='2' ry='2.3' fill='none' stroke='%23cc0e74' stroke-width='1.3'/%3E%3Cellipse cx='26' cy='19' rx='2' ry='2.3' fill='none' stroke='%23cc0e74' stroke-width='1.3'/%3E%3C!-- bone --%3E%3Crect x='36' y='8' width='18' height='5' rx='2.5' fill='none' stroke='%23e8559a' stroke-width='1.4'/%3E%3Ccircle cx='34.5' cy='10.5' r='3' fill='none' stroke='%23e8559a' stroke-width='1.4'/%3E%3Ccircle cx='55.5' cy='10.5' r='3' fill='none' stroke='%23e8559a' stroke-width='1.4'/%3E%3C!-- heart --%3E%3Cpath d='M66 8 c0-2-3-2-3 0 c0-2-3-2-3 0 c0 3 3 5 3 5 c0 0 3-2 3-5z' fill='%23f9a8d4' stroke='none'/%3E%3C!-- paw small --%3E%3Cellipse cx='48' cy='36' rx='3' ry='3.5' fill='none' stroke='%23cc0e74' stroke-width='1.3'/%3E%3Cellipse cx='43.5' cy='32' rx='1.7' ry='2' fill='none' stroke='%23cc0e74' stroke-width='1.1'/%3E%3Cellipse cx='52.5' cy='32' rx='1.7' ry='2' fill='none' stroke='%23cc0e74' stroke-width='1.1'/%3E%3Cellipse cx='40.5' cy='37' rx='1.5' ry='1.8' fill='none' stroke='%23cc0e74' stroke-width='1.1'/%3E%3Cellipse cx='55.5' cy='37' rx='1.5' ry='1.8' fill='none' stroke='%23cc0e74' stroke-width='1.1'/%3E%3C!-- fish --%3E%3Cellipse cx='16' cy='50' rx='7' ry='4' fill='none' stroke='%23e8559a' stroke-width='1.4'/%3E%3Cpath d='M23 50 l5-4 l0 8 z' fill='none' stroke='%23e8559a' stroke-width='1.4'/%3E%3Ccircle cx='11' cy='49' r='1' fill='%23e8559a'/%3E%3C!-- ball --%3E%3Ccircle cx='65' cy='45' r='5' fill='none' stroke='%23f9a8d4' stroke-width='1.4'/%3E%3Cpath d='M61 42 q4 3 8 0' fill='none' stroke='%23f9a8d4' stroke-width='1'/%3E%3Cpath d='M61 48 q4 3 8 0' fill='none' stroke='%23f9a8d4' stroke-width='1'/%3E%3C!-- yarn --%3E%3Ccircle cx='35' cy='62' r='6' fill='none' stroke='%23cc0e74' stroke-width='1.4'/%3E%3Cpath d='M30 58 q5 4 10 0' fill='none' stroke='%23cc0e74' stroke-width='1'/%3E%3Cpath d='M29 62 q6 4 12 0' fill='none' stroke='%23cc0e74' stroke-width='1'/%3E%3Cpath d='M30 66 q5-2 10 2' fill='none' stroke='%23cc0e74' stroke-width='1'/%3E%3C!-- bone small --%3E%3Crect x='55' y='60' width='12' height='3.5' rx='1.8' fill='none' stroke='%23e8559a' stroke-width='1.2'/%3E%3Ccircle cx='54' cy='61.8' r='2.2' fill='none' stroke='%23e8559a' stroke-width='1.2'/%3E%3Ccircle cx='68' cy='61.8' r='2.2' fill='none' stroke='%23e8559a' stroke-width='1.2'/%3E%3C!-- heart small --%3E%3Cpath d='M72 22 c0-1.5-2.2-1.5-2.2 0 c0-1.5-2.2-1.5-2.2 0 c0 2 2.2 3.5 2.2 3.5 c0 0 2.2-1.5 2.2-3.5z' fill='%23f9a8d4'/%3E%3C/svg%3E");
+  background-size:80px 80px;
+}
 
-/* FRONT — gradient kiri ke kanan: magenta → putih */
-.card-front{background:linear-gradient(120deg,#cc0e74 0%,#e8589a 40%,#f9d4e8 75%,#fff 100%)}
-.card-front .paw-pattern{opacity:.1}
+/* ===== FRONT ===== */
+.card-front{background:#fff}
+.card-front .doodle-pattern{opacity:.18}
+/* Pink solid block left side — like farmacia style */
+.front-pink-block{position:absolute;left:0;top:0;width:38mm;height:100%;background:linear-gradient(160deg,#cc0e74 0%,#e8559a 100%);z-index:1}
+.front-pink-block .doodle-pattern{opacity:.12;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='80' height='80' viewBox='0 0 80 80'%3E%3Cellipse cx='16' cy='18' rx='4' ry='4.5' fill='none' stroke='%23fff' stroke-width='1.5'/%3E%3Cellipse cx='10' cy='13' rx='2.2' ry='2.5' fill='none' stroke='%23fff' stroke-width='1.3'/%3E%3Cellipse cx='22' cy='13' rx='2.2' ry='2.5' fill='none' stroke='%23fff' stroke-width='1.3'/%3E%3Cellipse cx='6' cy='19' rx='2' ry='2.3' fill='none' stroke='%23fff' stroke-width='1.3'/%3E%3Cellipse cx='26' cy='19' rx='2' ry='2.3' fill='none' stroke='%23fff' stroke-width='1.3'/%3E%3Crect x='36' y='8' width='18' height='5' rx='2.5' fill='none' stroke='%23fff' stroke-width='1.4'/%3E%3Ccircle cx='34.5' cy='10.5' r='3' fill='none' stroke='%23fff' stroke-width='1.4'/%3E%3Ccircle cx='55.5' cy='10.5' r='3' fill='none' stroke='%23fff' stroke-width='1.4'/%3E%3Cpath d='M66 8 c0-2-3-2-3 0 c0-2-3-2-3 0 c0 3 3 5 3 5 c0 0 3-2 3-5z' fill='rgba(255,255,255,.6)'/%3E%3Cellipse cx='48' cy='36' rx='3' ry='3.5' fill='none' stroke='%23fff' stroke-width='1.3'/%3E%3Cellipse cx='43.5' cy='32' rx='1.7' ry='2' fill='none' stroke='%23fff' stroke-width='1.1'/%3E%3Cellipse cx='52.5' cy='32' rx='1.7' ry='2' fill='none' stroke='%23fff' stroke-width='1.1'/%3E%3Cellipse cx='40.5' cy='37' rx='1.5' ry='1.8' fill='none' stroke='%23fff' stroke-width='1.1'/%3E%3Cellipse cx='55.5' cy='37' rx='1.5' ry='1.8' fill='none' stroke='%23fff' stroke-width='1.1'/%3E%3Ccircle cx='35' cy='62' r='6' fill='none' stroke='%23fff' stroke-width='1.4'/%3E%3Cpath d='M30 58 q5 4 10 0' fill='none' stroke='%23fff' stroke-width='1'/%3E%3Cpath d='M29 62 q6 4 12 0' fill='none' stroke='%23fff' stroke-width='1'/%3E%3Cpath d='M30 66 q5-2 10 2' fill='none' stroke='%23fff' stroke-width='1'/%3E%3C/svg%3E");background-size:80px 80px}
+.front-right{position:absolute;left:38mm;right:0;top:0;bottom:0;z-index:1;padding:5mm 5mm 5mm 4mm;display:flex;flex-direction:column;justify-content:space-between}
+.front-left-inner{position:absolute;left:0;top:0;width:38mm;height:100%;z-index:2;padding:5mm 4mm;display:flex;flex-direction:column;justify-content:space-between}
 
-/* BACK — gradient terbalik */
-.card-back{background:linear-gradient(120deg,#fff 0%,#f9d4e8 25%,#e8589a 60%,#cc0e74 100%);justify-content:center;align-items:center}
+/* ===== BACK ===== */
+.card-back{background:#fff}
+.card-back .doodle-pattern{opacity:.13}
+.back-inner{position:relative;z-index:1;width:100%;height:100%;display:flex;align-items:center;justify-content:space-between;padding:5mm 7mm}
 
+/* Gold accent */
 .gold{color:#c9960c;font-weight:700}
-.gold-light{color:#f0c040}
-.white{color:#fff}
-.accent-bar{width:18mm;height:2.5px;background:linear-gradient(to right,#fff,#f0c040);border-radius:2px}
-
-.front-inner{position:relative;z-index:1;padding:5mm 6mm;display:flex;flex-direction:column;height:100%}
-.back-inner{position:relative;z-index:1;width:100%;height:100%;display:flex;align-items:center;justify-content:space-between;padding:5mm 6mm}
+.divider{width:100%;height:1px;background:rgba(255,255,255,.35);margin:2.5mm 0}
 
 @media print{
   body{background:#fff;padding:8mm}
   @page{margin:4mm;size:landscape}
-  .card{box-shadow:none;border:0.5pt solid #ddd}
+  .card{box-shadow:none;border:0.5pt solid #eee}
 }
 </style></head>
 <body>
@@ -1168,41 +1175,42 @@ body{font-family:'Roboto',sans-serif;background:#f5f5f5;display:flex;justify-con
 <div class="card-wrap">
   <div class="card-label">Depan</div>
   <div class="card card-front">
-    <div class="paw-pattern"></div>
-    <div class="front-inner">
-      <!-- Header -->
-      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:3.5mm">
-        <div style="display:flex;align-items:center;gap:2.5mm">
-          <img src="${logoSrc}" style="height:8mm;width:8mm;object-fit:contain;border-radius:1.5mm;background:rgba(255,255,255,.6);padding:1px" onerror="this.style.display='none'">
-          <div>
-            <div style="font-size:8px;font-weight:700;color:rgba(255,255,255,.9);letter-spacing:.5px">Cilegon Petshop</div>
-            <div style="font-size:7px;color:rgba(255,255,255,.65);letter-spacing:1px;text-transform:uppercase">Loyalty Card</div>
-          </div>
-        </div>
+    <div class="doodle-pattern"></div>
+
+    <!-- Kiri: pink block -->
+    <div class="front-pink-block"><div class="doodle-pattern"></div></div>
+    <div class="front-left-inner">
+      <!-- Logo + nama toko -->
+      <div style="display:flex;flex-direction:column;gap:1.5mm">
+        <img src="${logoSrc}" style="height:9mm;width:9mm;object-fit:contain;border-radius:1.5mm;background:rgba(255,255,255,.25);padding:1px" onerror="this.style.display='none'">
+        <div style="font-size:7.5px;font-weight:900;color:#fff;line-height:1.25;letter-spacing:.3px">Cilegon<br>Petshop</div>
+        <div style="font-size:6px;color:rgba(255,255,255,.7);text-transform:uppercase;letter-spacing:1.5px">Loyalty Card</div>
+      </div>
+      <!-- Member since -->
+      <div>
+        <div style="font-size:6px;color:rgba(255,255,255,.6);text-transform:uppercase;letter-spacing:1px;margin-bottom:1px">Member Sejak</div>
+        <div style="font-size:8px;font-weight:700;color:#fff">${joinDate}</div>
+      </div>
+    </div>
+
+    <!-- Kanan: info member -->
+    <div class="front-right">
+      <!-- Top: poin -->
+      <div style="display:flex;justify-content:flex-end">
         <div style="text-align:right">
-          <div style="font-size:7px;color:rgba(255,255,255,.6);text-transform:uppercase;letter-spacing:1px">Member Sejak</div>
-          <div style="font-size:8px;font-weight:700;color:#fff">${joinDate}</div>
+          <div style="font-size:6.5px;color:#aaa;text-transform:uppercase;letter-spacing:1px">Total Poin</div>
+          <div style="font-size:14px;font-weight:900;color:#cc0e74;line-height:1">${c.points||0}</div>
         </div>
       </div>
-
-      <div class="accent-bar" style="margin-bottom:3.5mm"></div>
-
-      <!-- Name & Code -->
-      <div style="flex:1;display:flex;flex-direction:column;justify-content:center">
-        <div style="font-size:16px;font-weight:900;color:#fff;letter-spacing:.5px;text-transform:uppercase;margin-bottom:2mm;text-shadow:0 1px 4px rgba(0,0,0,.2)">${c.name}</div>
-        <div style="font-family:'Roboto Mono',monospace;font-size:12px;font-weight:700;color:#f0c040;letter-spacing:2.5px">${c.unique_code||'—'}</div>
+      <!-- Middle: nama & kode -->
+      <div>
+        <div style="font-size:15px;font-weight:900;color:#1a1a1a;text-transform:uppercase;letter-spacing:.3px;line-height:1.15;margin-bottom:2mm">${c.name}</div>
+        <div style="font-family:'Roboto Mono',monospace;font-size:11px;font-weight:700;color:#cc0e74;letter-spacing:2px">${c.unique_code||'—'}</div>
       </div>
-
-      <!-- Footer info -->
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:2mm;border-top:1px solid rgba(255,255,255,.3);padding-top:2mm">
-        <div>
-          <div style="font-size:6px;color:rgba(255,255,255,.6);text-transform:uppercase;letter-spacing:1px">No HP</div>
-          <div style="font-size:8.5px;color:#fff;font-weight:600">${c.phone||'—'}</div>
-        </div>
-        <div style="text-align:right">
-          <div style="font-size:6px;color:rgba(255,255,255,.6);text-transform:uppercase;letter-spacing:1px">Poin</div>
-          <div style="font-size:10px;font-weight:900;color:#f0c040">${c.points||0} Poin</div>
-        </div>
+      <!-- Bottom: HP -->
+      <div style="border-top:1px solid #f0e0ea;padding-top:2mm">
+        <div style="font-size:6px;color:#bbb;text-transform:uppercase;letter-spacing:1px;margin-bottom:1px">No HP</div>
+        <div style="font-size:8.5px;font-weight:600;color:#555">${c.phone||'—'}</div>
       </div>
     </div>
   </div>
@@ -1212,21 +1220,21 @@ body{font-family:'Roboto',sans-serif;background:#f5f5f5;display:flex;justify-con
 <div class="card-wrap">
   <div class="card-label">Belakang</div>
   <div class="card card-back">
-    <div class="paw-pattern"></div>
+    <div class="doodle-pattern"></div>
     <div class="back-inner">
       <!-- QR Code -->
       <div style="display:flex;flex-direction:column;align-items:center;gap:2mm">
-        <div id="qrcode" style="background:#fff;padding:2.5mm;border-radius:2mm;box-shadow:0 2px 8px rgba(0,0,0,.15)"></div>
-        <div style="font-size:6.5px;color:#cc0e74;text-align:center;font-weight:700;text-transform:uppercase;letter-spacing:.8px">Profil Member</div>
+        <div id="qrcode" style="background:#fff;padding:2mm;border-radius:2mm;box-shadow:0 2px 8px rgba(0,0,0,.1)"></div>
+        <div style="font-size:6px;color:#cc0e74;font-weight:700;text-transform:uppercase;letter-spacing:1px">Scan Profil Member</div>
       </div>
-      <!-- Right side info -->
-      <div style="display:flex;flex-direction:column;align-items:flex-end;gap:3mm;min-width:28mm">
-        <img src="${logoSrc}" style="height:11mm;width:11mm;object-fit:contain" onerror="this.style.display='none'">
-        <div style="text-align:right">
-          <div style="font-size:11px;font-weight:900;color:#cc0e74;line-height:1.2">Cilegon</div>
-          <div style="font-size:11px;font-weight:900;color:#c9960c;line-height:1.2">Petshop</div>
+      <!-- Logo + nama -->
+      <div style="display:flex;flex-direction:column;align-items:center;gap:2.5mm">
+        <img src="${logoSrc}" style="height:14mm;width:14mm;object-fit:contain" onerror="this.style.display='none'">
+        <div style="text-align:center">
+          <div style="font-size:10px;font-weight:900;color:#cc0e74;line-height:1.3">Cilegon</div>
+          <div style="font-size:10px;font-weight:900;color:#c9960c;line-height:1.3">Petshop</div>
         </div>
-        <div style="font-family:'Roboto Mono',monospace;font-size:7.5px;font-weight:700;color:#cc0e74;letter-spacing:1.5px">${c.unique_code||'—'}</div>
+        <div style="font-family:'Roboto Mono',monospace;font-size:6.5px;color:#ccc;letter-spacing:1.5px">${c.unique_code||'—'}</div>
       </div>
     </div>
   </div>
@@ -1236,13 +1244,15 @@ body{font-family:'Roboto',sans-serif;background:#f5f5f5;display:flex;justify-con
 new QRCode(document.getElementById('qrcode'),{
   text:'${profileUrl}',
   width:76,height:76,
-  colorDark:'#cc0e74',colorLight:'#ffffff',
+  colorDark:'#000000',
+  colorLight:'#ffffff',
   correctLevel:QRCode.CorrectLevel.M
 });
 window.onload=()=>setTimeout(()=>window.print(),1200);
 <\/script>
 </body></html>`);
-  win.document.close();}
+  win.document.close();
+}
 
 // ===== LOYALTY SETTINGS =====
 function loadLoyaltySettings(){const s=localStorage.getItem('cp_loyalty');if(s)lSet=Object.assign(lSet,JSON.parse(s));}
