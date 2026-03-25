@@ -145,9 +145,21 @@ input:checked+.slider:before{transform:translateX(18px)}
 
 /* ===== PRINT REPORT ===== */
 @media print{
+  @page{margin:10mm;size:A4}
   body.print-report *{visibility:hidden!important}
   body.print-report .rpt-area,body.print-report .rpt-area *{visibility:visible!important}
-  body.print-report .rpt-area{position:fixed!important;left:0!important;top:0!important;width:100%!important;font-size:12px;background:#fff;padding:10mm;overflow:visible!important}
+  body.print-report .rpt-area{
+    position:absolute!important;
+    left:0!important;top:0!important;
+    width:100%!important;
+    font-size:11px;
+    background:#fff;
+    overflow:visible!important;
+  }
+  body.print-report .tbl{width:100%;border-collapse:collapse}
+  body.print-report .tbl thead th{border:1px solid #000;padding:5px 8px;background:#f3f4f6!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  body.print-report .tbl tbody td{border:1px solid #ccc;padding:4px 8px}
+  body.print-report .tbl tbody tr{page-break-inside:avoid}
   body.print-report .no-print{display:none!important}
 }
 
