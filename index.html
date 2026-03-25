@@ -1019,9 +1019,10 @@ function applyPermissions(perms){
 async function refreshApp(){
   showLoad();
   const [rp,rc,rcu] = await Promise.all([
-    db.from('products').select('*'),
-    db.from('categories').select('*').order('name'),
-    db.from('customers').select('*').order('created_at',{ascending:true})
+    db.from('products').select('*').range(0, 9999),
+    db.from('categories').select('*').order('name').range(0, 999),
+    db.from('customers').select('*').order('created_at',{ascending:true}).range(0, 9999)
+]);
   ]);
   if(rp.data) allProducts=rp.data;
   if(rc.data) allCategories=rc.data;
@@ -1626,10 +1627,15 @@ async function saveCashOpname(e){
 }
 
 // =========== STOCK OPNAME ===========
-function loadStockOpname(){
+async function loadStockOpname(){
+  showLoad();
+  const {data} = await db.from('products').select('*').order('name').range(0, 9999);
+  hideLoad();
+  const list = data || allProducts;
   document.getElementById('soPrintDate').innerText=new Date().toLocaleDateString('id-ID',{day:'2-digit',month:'long',year:'numeric'});
-  document.getElementById('soTableBody').innerHTML=allProducts.map((p,i)=>`<tr><td class="text-center">${i+1}</td><td class="font-bold">${p.name}</td><td class="text-sm text-gray-500">${p.category}</td><td class="text-center font-black ${p.qty<=5?'text-red-500':p.qty<=10?'text-amber-500':''}">${p.qty}</td><td></td></tr>`).join('');
+  document.getElementById('soTableBody').innerHTML=list.map((p,i)=>`<tr><td class="text-center">${i+1}</td><td class="font-bold">${p.name}</td><td class="text-sm text-gray-500">${p.category}</td><td class="text-center font-black ${p.qty<=5?'text-red-500':p.qty<=10?'text-amber-500':''}">${p.qty}</td><td></td></tr>`).join('');
 }
+  
 function printStockOpname(){
   const soHeader = document.getElementById('soHeader');
   const soArea = document.getElementById('soArea');
