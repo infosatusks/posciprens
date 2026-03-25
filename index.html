@@ -265,16 +265,26 @@ input:checked+.slider:before{transform:translateX(18px)}
 
     <nav class="flex-1 overflow-y-auto p-3" id="sidebarNav">
       <a href="#" onclick="nav('dashboard')" id="menu-dashboard" class="menu-item"><i class="fas fa-chart-line"></i><span class="sb-label">Dashboard</span></a>
+
       <div class="pt-4 pb-1 px-2 text-[10px] font-bold text-gray-400 uppercase tracking-widest sb-section-label">Transaksi</div>
-      <a href="#" onclick="nav('pos')" id="menu-pos" class="menu-item"><i class="fas fa-cash-register"></i><span class="sb-label">Transaksi</span></a>
+      <a href="#" onclick="nav('pos')" id="menu-pos" class="menu-item"><i class="fas fa-cash-register"></i><span class="sb-label">Transaksi Baru</span></a>
+      <a href="#" onclick="nav('salescrud')" id="menu-salescrud" class="menu-item"><i class="fas fa-list-check"></i><span class="sb-label">Data Transaksi</span></a>
       <a href="#" onclick="nav('stockin')" id="menu-stockin" class="menu-item"><i class="fas fa-box-open"></i><span class="sb-label">Tambah Stok</span></a>
       <a href="#" onclick="nav('expense')" id="menu-expense" class="menu-item"><i class="fas fa-money-bill-wave"></i><span class="sb-label">Pengeluaran</span></a>
+
       <div class="pt-4 pb-1 px-2 text-[10px] font-bold text-gray-400 uppercase tracking-widest sb-section-label">Audit</div>
       <a href="#" onclick="nav('laporanMenu')" id="menu-laporanMenu" class="menu-item"><i class="fas fa-file-invoice"></i><span class="sb-label">Laporan</span></a>
       <a href="#" onclick="nav('stockopname')" id="menu-stockopname" class="menu-item"><i class="fas fa-clipboard-list"></i><span class="sb-label">Stock Opname</span></a>
       <a href="#" onclick="nav('cashopname')" id="menu-cashopname" class="menu-item"><i class="fas fa-coins"></i><span class="sb-label">Cash Opname</span></a>
+
       <div class="pt-4 pb-1 px-2 text-[10px] font-bold text-gray-400 uppercase tracking-widest sb-section-label">Pelanggan</div>
       <a href="#" onclick="nav('loyalty')" id="menu-loyalty" class="menu-item"><i class="fas fa-medal"></i><span class="sb-label">Program Loyalty</span></a>
+      <a href="#" onclick="nav('customers')" id="menu-customers" class="menu-item"><i class="fas fa-users"></i><span class="sb-label">Data Pelanggan</span></a>
+      <a href="#" onclick="nav('loyaltysettings')" id="menu-loyaltysettings" class="menu-item"><i class="fas fa-star"></i><span class="sb-label">Setting Loyalty</span></a>
+
+      <div class="pt-4 pb-1 px-2 text-[10px] font-bold text-gray-400 uppercase tracking-widest sb-section-label">Produk</div>
+      <a href="#" onclick="nav('products')" id="menu-products" class="menu-item"><i class="fas fa-boxes"></i><span class="sb-label">Produk &amp; Label</span></a>
+
       <div id="adminNav">
         <div class="pt-4 pb-1 px-2 text-[10px] font-bold text-gray-400 uppercase tracking-widest sb-section-label">Sistem</div>
         <button onclick="toggleSub('subSettings',this)" class="menu-item w-full justify-between">
@@ -282,12 +292,9 @@ input:checked+.slider:before{transform:translateX(18px)}
           <i class="fas fa-chevron-right text-[10px] text-gray-400 chevron-icon transition-transform sb-label"></i>
         </button>
         <div id="subSettings" class="sub-menu pl-7">
-          <a href="#" onclick="nav('users')" id="menu-users" class="menu-item text-sm py-2"><i class="fas fa-user-shield"></i><span class="sb-label">Users & Akses</span></a>
+          <a href="#" onclick="nav('users')" id="menu-users" class="menu-item text-sm py-2"><i class="fas fa-user-shield"></i><span class="sb-label">Users &amp; Akses</span></a>
           <a href="#" onclick="nav('categories')" id="menu-categories" class="menu-item text-sm py-2"><i class="fas fa-tags"></i><span class="sb-label">Kategori</span></a>
-          <a href="#" onclick="nav('products')" id="menu-products" class="menu-item text-sm py-2"><i class="fas fa-boxes"></i><span class="sb-label">Produk & Label</span></a>
-          <a href="#" onclick="nav('customers')" id="menu-customers" class="menu-item text-sm py-2"><i class="fas fa-users"></i><span class="sb-label">Data Pelanggan</span></a>
           <a href="#" onclick="nav('sources')" id="menu-sources" class="menu-item text-sm py-2"><i class="fas fa-store"></i><span class="sb-label">Sumber Transaksi</span></a>
-          <a href="#" onclick="nav('loyaltysettings')" id="menu-loyaltysettings" class="menu-item text-sm py-2"><i class="fas fa-star"></i><span class="sb-label">Setting Loyalty</span></a>
           <a href="#" onclick="nav('printsettings')" id="menu-printsettings" class="menu-item text-sm py-2"><i class="fas fa-receipt"></i><span class="sb-label">Setting Struk</span></a>
         </div>
       </div>
@@ -379,6 +386,45 @@ input:checked+.slider:before{transform:translateX(18px)}
         </div>
       </div>
 
+      <!-- DATA TRANSAKSI (CRUD) -->
+      <div id="view-salescrud" class="view-section hidden p-5">
+        <div class="card overflow-hidden">
+          <div class="p-5 border-b flex flex-wrap items-center justify-between gap-3" style="border-color:var(--border)">
+            <h3 class="font-bold">Data Transaksi</h3>
+            <div class="flex flex-wrap gap-2">
+              <input type="date" id="scFilterS" class="inp inp-sm" style="width:auto">
+              <input type="date" id="scFilterE" class="inp inp-sm" style="width:auto">
+              <select id="scFilterSrc" class="inp inp-sm" style="width:auto"><option value="">Semua Sumber</option></select>
+              <button onclick="loadSalesCrud()" class="btn btn-secondary btn-sm"><i class="fas fa-search"></i> Filter</button>
+            </div>
+          </div>
+          <!-- Summary bar -->
+          <div class="px-5 py-3 grid grid-cols-3 gap-4 border-b text-sm" style="border-color:var(--border);background:#f9fafb">
+            <div><p class="text-xs text-gray-400 uppercase font-bold mb-0.5">Transaksi</p><p id="scTotalTrx" class="font-black text-gray-800">0</p></div>
+            <div><p class="text-xs text-gray-400 uppercase font-bold mb-0.5">Total Pendapatan</p><p id="scTotalRev" class="font-black text-green-600">Rp 0</p></div>
+            <div><p class="text-xs text-gray-400 uppercase font-bold mb-0.5">Total Diskon</p><p id="scTotalDisc" class="font-black text-amber-500">Rp 0</p></div>
+          </div>
+          <div class="overflow-x-auto">
+            <table class="tbl">
+              <thead>
+                <tr>
+                  <th>Invoice</th>
+                  <th>Tanggal</th>
+                  <th>Pelanggan</th>
+                  <th>Sumber</th>
+                  <th>Kasir</th>
+                  <th class="text-right">Total</th>
+                  <th class="text-right">Diskon</th>
+                  <th class="text-right">Bayar</th>
+                  <th class="text-center">Aksi</th>
+                </tr>
+              </thead>
+              <tbody id="tbSalesCrud"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+      
       <!-- TAMBAH STOK -->
       <div id="view-stockin" class="view-section hidden p-5">
         <div class="card p-6 max-w-lg mx-auto">
@@ -903,6 +949,10 @@ async function refreshApp(){
   const trxSrcOpts='<option value="">— Langsung / Walk-in —</option>'+allSourcesTrx.map(s=>`<option value="${s.name}">${s.name}</option>`).join('');
   if(document.getElementById('posSrc'))document.getElementById('posSrc').innerHTML=trxSrcOpts;
 
+  // Populate filter sumber di Data Transaksi
+  if(document.getElementById('scFilterSrc'))
+    document.getElementById('scFilterSrc').innerHTML='<option value="">Semua Sumber</option>'+allSourcesTrx.map(s=>`<option value="${s.name}">${s.name}</option>`).join('');
+  
   // Expense source dropdown
   const expSrcOpts='<option value="">— Pilih Sumber —</option>'+allSourcesExp.map(s=>`<option value="${s.name}">${s.name}</option>`).join('');
   if(document.getElementById('expSource'))document.getElementById('expSource').innerHTML=expSrcOpts;
@@ -926,7 +976,7 @@ function nav(id){
   document.querySelectorAll('.menu-item').forEach(e=>e.classList.remove('active'));
   const mi=document.getElementById('menu-'+id);if(mi)mi.classList.add('active');
   if(window.innerWidth<768)closeSidebar();
-  const titles={dashboard:'Dashboard',pos:'Transaksi',stockin:'Tambah Stok',expense:'Pengeluaran',cashopname:'Cash Opname',stockopname:'Stock Opname',loyalty:'Program Loyalty',users:'Users & Akses',categories:'Kategori Produk',products:'Produk & Label',customers:'Data Pelanggan',sources:'Sumber Transaksi',loyaltysettings:'Setting Loyalty',printsettings:'Setting Struk (58mm)',laporanMenu:'Laporan Keuangan',ringkasanPenjualan:'Ringkasan Penjualan',repSales:'Histori Transaksi',repFinance:'Laporan Laba Rugi'};
+  const titles={dashboard:'Dashboard',pos:'Transaksi Baru',salescrud:'Data Transaksi',stockin:'Tambah Stok',expense:'Pengeluaran',cashopname:'Cash Opname',stockopname:'Stock Opname',loyalty:'Program Loyalty',users:'Users & Akses',categories:'Kategori Produk',products:'Produk & Label',customers:'Data Pelanggan',sources:'Sumber Transaksi',loyaltysettings:'Setting Loyalty',printsettings:'Setting Struk (58mm)',laporanMenu:'Laporan Keuangan',ringkasanPenjualan:'Ringkasan Penjualan',repSales:'Histori Transaksi',repFinance:'Laporan Laba Rugi'};
   document.getElementById('pageTitle').innerText=titles[id]||'Cilegon Petshop';
   if(id==='dashboard')loadDashboard();
   else if(id==='users')loadUsers();
@@ -936,6 +986,7 @@ function nav(id){
   else if(id==='loyalty')loadLoyalty();
   else if(id==='sources')loadSources();
   else if(id==='repSales')loadSalesList();
+  else if(id==='salescrud') loadSalesCrud();
   else if(id==='ringkasanPenjualan')loadSummary();
   else if(id==='cashopname')loadCashOpname();
   else if(id==='stockopname')loadStockOpname();
@@ -1374,6 +1425,57 @@ async function printStockOpname(){
   setTimeout(()=>{window.print();setTimeout(()=>{document.body.classList.remove('print-report');soArea.classList.remove('rpt-area');soHeader.classList.add('hidden');},500);},400);
 }
 
+// ===== SALES CRUD =====
+async function loadSalesCrud(){
+  showLoad();
+  const s = document.getElementById('scFilterS').value;
+  const e = document.getElementById('scFilterE').value;
+  const src = document.getElementById('scFilterSrc').value;
+  let q = db.from('sales').select('*').order('created_at',{ascending:false});
+  if(s) q = q.gte('date',s);
+  if(e) q = q.lte('date',e);
+  const {data} = await q;
+  hideLoad();
+  if(!data) return;
+
+  // Filter sumber di sisi klien jika dipilih
+  const list = src ? data.filter(s=>s.source===src) : data;
+
+  // Summary
+  const totalTrx = list.length;
+  const totalRev = list.reduce((t,s)=>t+Number(s.total_payment),0);
+  const totalDisc = list.reduce((t,s)=>t+Number(s.discount||0),0);
+  document.getElementById('scTotalTrx').innerText = totalTrx;
+  document.getElementById('scTotalRev').innerText = fRp(totalRev);
+  document.getElementById('scTotalDisc').innerText = fRp(totalDisc);
+
+  document.getElementById('tbSalesCrud').innerHTML = list.map(s=>`
+    <tr>
+      <td class="font-mono text-xs text-gray-500">${s.id}</td>
+      <td class="text-sm">${s.date}</td>
+      <td class="font-bold">${s.buyer_name}</td>
+      <td class="text-sm text-gray-500">${s.source||'—'}</td>
+      <td class="text-sm text-gray-500">${s.cashier||'—'}</td>
+      <td class="text-right text-sm text-gray-500">${fRp(s.total_nominal)}</td>
+      <td class="text-right text-sm text-amber-500">${s.discount?fRp(s.discount):'—'}</td>
+      <td class="text-right font-bold text-green-600">${fRp(s.total_payment)}</td>
+      <td class="text-center">
+        <button onclick="openEditSale('${s.id}')" class="btn btn-xs mr-1" style="background:#eff6ff;color:#3b82f6" title="Edit"><i class="fas fa-edit"></i></button>
+        <button onclick="voidSaleCrud('${s.id}')" class="btn btn-xs btn-danger" title="Void/Hapus"><i class="fas fa-ban"></i></button>
+      </td>
+    </tr>`).join('');
+}
+
+async function voidSaleCrud(id){
+  if(!confirm(`VOID transaksi ${id}?\nStok akan dikembalikan otomatis.`)) return;
+  showLoad();
+  const {data:det} = await db.from('sales_details').select('*').eq('sale_id',id);
+  if(det){ for(let d of det){ const p=allProducts.find(x=>x.id===d.product_id); if(p) await db.from('products').update({qty:p.qty+d.qty}).eq('id',p.id); } }
+  await db.from('sales').delete().eq('id',id);
+  hideLoad(); toast('Transaksi di-void, stok dikembalikan');
+  logAct('Void',`Void ${id}`); await refreshApp(); loadSalesCrud();
+}
+  
 // ===== REPORTS =====
 async function loadSalesList(){
   showLoad();const{data}=await db.from('sales').select('*').gte('date',document.getElementById('filterSaleS').value).lte('date',document.getElementById('filterSaleE').value).order('created_at',{ascending:false});hideLoad();
