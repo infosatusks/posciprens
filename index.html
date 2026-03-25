@@ -1635,7 +1635,15 @@ async function loadStockOpname(){
   document.getElementById('soTableBody').innerHTML=list.map((p,i)=>`<tr><td class="text-center">${i+1}</td><td class="font-bold">${p.name}</td><td class="text-sm text-gray-500">${p.category}</td><td class="text-center font-black ${p.qty<=5?'text-red-500':p.qty<=10?'text-amber-500':''}">${p.qty}</td><td></td></tr>`).join('');
 }
   
-function printStockOpname(){
+async function printStockOpname(){
+  showLoad();
+  const {data} = await db.from('products').select('*').order('name').range(0, 9999);
+  hideLoad();
+  const list = data || allProducts;
+  document.getElementById('soPrintDate').innerText = new Date().toLocaleDateString('id-ID',{day:'2-digit',month:'long',year:'numeric'});
+  document.getElementById('soTableBody').innerHTML = list.map((p,i) =>
+    `<tr><td class="text-center">${i+1}</td><td class="font-bold">${p.name}</td><td class="text-sm text-gray-500">${p.category}</td><td class="text-center font-black ${p.qty<=5?'text-red-500':p.qty<=10?'text-amber-500':''}">${p.qty}</td><td></td></tr>`
+  ).join('');
   const soHeader = document.getElementById('soHeader');
   const soArea = document.getElementById('soArea');
   soHeader.classList.remove('hidden');
