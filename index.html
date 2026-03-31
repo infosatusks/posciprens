@@ -320,6 +320,7 @@ input:checked+.slider:before{transform:translateX(18px)}
           <a href="#" onclick="nav('users')" id="menu-users" class="menu-item text-sm py-2"><i class="fas fa-user-shield"></i><span class="sb-label">Users &amp; Akses</span></a>
           <a href="#" onclick="nav('categories')" id="menu-categories" class="menu-item text-sm py-2"><i class="fas fa-tags"></i><span class="sb-label">Kategori</span></a>
           <a href="#" onclick="nav('sources')" id="menu-sources" class="menu-item text-sm py-2"><i class="fas fa-store"></i><span class="sb-label">Sumber Transaksi</span></a>
+          <a href="#" onclick="nav('vendorprice')" id="menu-vendorprice" class="menu-item text-sm py-2"><i class="fas fa-tags"></i><span class="sb-label">Harga Vendor</span></a>
           <a href="#" onclick="nav('printsettings')" id="menu-printsettings" class="menu-item text-sm py-2"><i class="fas fa-receipt"></i><span class="sb-label">Setting Struk</span></a>
         </div>
       </div>
@@ -407,6 +408,25 @@ input:checked+.slider:before{transform:translateX(18px)}
           <div class="p-4 border-t flex items-center justify-between bg-gray-50 text-sm" style="border-color:var(--border)">
             <span class="text-gray-500"><span id="posTotalItem" class="font-bold text-gray-800">0</span> item</span>
             <div class="text-right"><div class="text-xs text-gray-400">Subtotal</div><div class="font-bold" id="posTotalNominal">Rp 0</div></div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- HARGA VENDOR -->
+      <div id="view-vendorprice" class="view-section hidden p-5">
+        <div class="card overflow-hidden">
+          <div class="p-5 border-b flex flex-wrap items-center justify-between gap-3" style="border-color:var(--border)">
+            <div><h3 class="font-bold">Harga Vendor</h3><p class="text-xs text-gray-500 mt-0.5">Bandingkan harga beli dari berbagai vendor per produk</p></div>
+            <div class="flex gap-2">
+              <button onclick="addVendorCol()" class="btn btn-secondary btn-sm"><i class="fas fa-plus"></i> Tambah Vendor</button>
+              <button onclick="saveVendorPrices()" class="btn btn-primary btn-sm"><i class="fas fa-save"></i> Simpan</button>
+            </div>
+          </div>
+          <div class="overflow-x-auto">
+            <table class="tbl" id="vendorTable">
+              <thead id="vendorHead"></thead>
+              <tbody id="vendorBody"></tbody>
+            </table>
           </div>
         </div>
       </div>
@@ -529,7 +549,7 @@ input:checked+.slider:before{transform:translateX(18px)}
         <div class="card overflow-hidden">
           <div class="p-5 border-b flex items-center justify-between" style="border-color:var(--border)">
             <div><h3 class="font-bold">Program Loyalty Member</h3><p class="text-xs text-gray-500 mt-0.5" id="loyaltySubtitle">—</p></div>
-            <button onclick="openCustomerModal()" class="btn btn-primary btn-sm"><i class="fas fa-id-card"></i> Daftarkan Member</button>
+            <button onclick="openCustomerModal('',true)" class="btn btn-primary btn-sm"><i class="fas fa-id-card"></i> Daftarkan Member</button>
           </div>
           <div class="overflow-x-auto">
             <table class="tbl">
@@ -650,8 +670,33 @@ input:checked+.slider:before{transform:translateX(18px)}
           </div>
           <div class="card p-6">
             <h3 class="font-bold text-sm mb-4">Preview Kartu Member</h3>
-            <div class="loyalty-card mb-5">
-              <div class="relative z-10"><div class="flex items-center justify-between mb-6"><span class="text-sm font-bold opacity-80">Cilegon Petshop</span><i class="fas fa-paw text-2xl opacity-60"></i></div><p class="font-mono font-bold text-xl tracking-widest mb-1">CPS-00000001</p><p class="text-sm opacity-80">NAMA PELANGGAN</p><div class="mt-4 flex items-center gap-2"><i class="fas fa-star text-yellow-300 text-sm"></i><span class="font-bold text-sm">0 Poin</span></div></div>
+            <!-- Preview kartu sesuai desain asli: split pink-putih -->
+            <div class="mb-5 rounded-2xl overflow-hidden" style="box-shadow:0 8px 24px rgba(204,14,116,.2);height:120px;display:flex">
+              <!-- Kiri: pink + doodle -->
+              <div class="relative flex-shrink-0 flex flex-col justify-between p-3" style="width:38%;background:linear-gradient(160deg,#cc0e74,#e8559a);overflow:hidden">
+                <div style="position:absolute;inset:0;background-image:url('doodle.jpg');background-size:cover;opacity:.15;mix-blend-mode:luminosity"></div>
+                <div class="relative z-10 flex flex-col gap-1">
+                  <img src="logo.png" class="w-8 h-8 object-contain rounded-lg" style="background:#fff;padding:1px" onerror="this.src='logo.jpg'">
+                  <div class="font-black text-white leading-tight" style="font-size:9px">Cilegon<br>Petshop</div>
+                  <div class="font-bold text-white/80 uppercase tracking-widest" style="font-size:6px">Loyalty Card</div>
+                </div>
+                <div class="relative z-10">
+                  <div class="font-bold text-white/70 uppercase" style="font-size:6px">Member Sejak</div>
+                  <div class="font-black text-white" style="font-size:8px">01 Jan 2025</div>
+                </div>
+              </div>
+              <!-- Kanan: putih -->
+              <div class="flex-1 bg-white flex flex-col justify-between p-3">
+                <div></div>
+                <div>
+                  <div class="font-black text-gray-900 uppercase" style="font-size:13px">NAMA MEMBER</div>
+                  <div class="font-bold tracking-widest" style="font-size:9px;color:#cc0e74;font-family:monospace">CPS-00000001</div>
+                </div>
+                <div style="border-top:1px solid #f5e0ec;padding-top:4px">
+                  <div class="font-bold text-gray-400 uppercase" style="font-size:6px">No HP</div>
+                  <div class="font-bold text-gray-700" style="font-size:8px">08xxxxxxxxxx</div>
+                </div>
+              </div>
             </div>
             <div class="p-4 rounded-xl text-sm" style="background:#f9fafb;border:1px solid var(--border)"><p class="font-bold mb-1">Aturan Saat Ini:</p><p class="text-gray-600 leading-relaxed" id="loyaltySummary">—</p></div>
           </div>
@@ -729,7 +774,9 @@ input:checked+.slider:before{transform:translateX(18px)}
         <div class="card overflow-hidden">
           <div class="p-5 border-b flex flex-wrap items-center justify-between gap-3" style="border-color:var(--border)">
             <h3 class="font-bold">Histori Transaksi</h3>
-            <div class="flex gap-2"><input type="date" id="filterSaleS" class="inp inp-sm" style="width:auto"><input type="date" id="filterSaleE" class="inp inp-sm" style="width:auto"><button onclick="loadSalesList()" class="btn btn-secondary btn-sm">Filter</button></div>
+            <div class="flex flex-wrap gap-2">
+              <button onclick="exportSalesCSV()" class="btn btn-secondary btn-sm"><i class="fas fa-file-csv"></i> CSV</button>
+              <input type="date" id="filterSaleS" class="inp inp-sm" style="width:auto"><input type="date" id="filterSaleE" class="inp inp-sm" style="width:auto"><button onclick="loadSalesList()" class="btn btn-secondary btn-sm">Filter</button></div>
           </div>
           <div class="overflow-x-auto"><table class="tbl"><thead><tr><th>Invoice</th><th>Tanggal</th><th>Pelanggan</th><th>Sumber</th><th class="text-right">Total</th><th class="text-center">Aksi</th></tr></thead><tbody id="tbSalesList"></tbody></table></div>
         </div>
@@ -738,7 +785,9 @@ input:checked+.slider:before{transform:translateX(18px)}
       <!-- LABA RUGI -->
       <div id="view-repFinance" class="view-section hidden p-5">
         <div class="card p-5">
-          <div class="flex flex-wrap items-center justify-between gap-3 mb-5"><h3 class="font-bold">Laporan Laba Rugi</h3><div class="flex gap-2"><input type="date" id="filterFinS" class="inp inp-sm" style="width:auto"><input type="date" id="filterFinE" class="inp inp-sm" style="width:auto"><button onclick="loadFinance()" class="btn btn-secondary btn-sm">Filter</button></div></div>
+          <div class="flex flex-wrap items-center justify-between gap-3 mb-5"><h3 class="font-bold">Laporan Laba Rugi</h3><div class="flex flex-wrap gap-2">
+  <button onclick="exportFinanceCSV()" class="btn btn-secondary btn-sm"><i class="fas fa-file-csv"></i> CSV</button>
+  <input type="date" id="filterFinS" class="inp inp-sm" style="width:auto"><input type="date" id="filterFinE" class="inp inp-sm" style="width:auto"><button onclick="loadFinance()" class="btn btn-secondary btn-sm">Filter</button></div></div>
           <div class="grid grid-cols-3 gap-4 mb-5">
             <div class="rounded-xl p-4 text-center" style="background:#f0fdf4;border:1px solid #bbf7d0"><p class="text-xs font-bold uppercase text-gray-500 mb-1">Pemasukan</p><p id="finIn" class="text-xl font-black text-green-600">Rp 0</p></div>
             <div class="rounded-xl p-4 text-center" style="background:#fef2f5;border:1px solid #fecdd3"><p class="text-xs font-bold uppercase text-gray-500 mb-1">Pengeluaran</p><p id="finOut" class="text-xl font-black" style="color:var(--p)">Rp 0</p></div>
@@ -1004,7 +1053,7 @@ function nav(id){
   document.querySelectorAll('.menu-item').forEach(e=>e.classList.remove('active'));
   const mi=document.getElementById('menu-'+id);if(mi)mi.classList.add('active');
   if(window.innerWidth<768)closeSidebar();
-  const titles={dashboard:'Dashboard',pos:'Transaksi Baru',salescrud:'Data Transaksi',stockin:'Tambah Stok',expense:'Pengeluaran',cashopname:'Cash Opname',stockopname:'Stock Opname',loyalty:'Program Loyalty',users:'Users & Akses',categories:'Kategori Produk',products:'Produk & Label',customers:'Data Pelanggan',sources:'Sumber Transaksi',loyaltysettings:'Setting Loyalty',printsettings:'Setting Struk (58mm)',laporanMenu:'Laporan Keuangan',ringkasanPenjualan:'Ringkasan Penjualan',repSales:'Histori Transaksi',repFinance:'Laporan Laba Rugi'};
+  const titles={dashboard:'Dashboard',pos:'Transaksi Baru',salescrud:'Data Transaksi',stockin:'Tambah Stok',expense:'Pengeluaran',cashopname:'Cash Opname',stockopname:'Stock Opname',loyalty:'Program Loyalty',users:'Users & Akses',categories:'Kategori Produk',products:'Produk & Label',customers:'Data Pelanggan',sources:'Sumber Transaksi',loyaltysettings:'Setting Loyalty',printsettings:'Setting Struk (58mm)',laporanMenu:'Laporan Keuangan',ringkasanPenjualan:'Ringkasan Penjualan',repSales:'Histori Transaksi',repFinance:'Laporan Laba Rugi',vendorprice:'Harga Vendor',};
   document.getElementById('pageTitle').innerText=titles[id]||'Cilegon Petshop';
   if(id==='dashboard')loadDashboard();
   else if(id==='users')loadUsers();
@@ -1018,6 +1067,7 @@ function nav(id){
   else if(id==='ringkasanPenjualan')loadSummary();
   else if(id==='cashopname')loadCashOpname();
   else if(id==='stockopname')loadStockOpname();
+  else if(id==='vendorprice') loadVendorPrice();
   else if(id==='repFinance')loadFinance();
   else if(id==='loyaltysettings')loadLoyaltySettingsView();
   else if(id==='pos'&&posRows===0)addPosRow();
@@ -1089,19 +1139,43 @@ function calcExpiryDate(){
   else if(lSet.expiryType==='months'){const d=new Date();d.setMonth(d.getMonth()+lSet.expiryMonths);return d.toISOString().split('T')[0];}
   return null;
 }
-function openCustomerModal(id=''){
+function openCustomerModal(id='', asLoyalty=false){
   ['custId','custName','custPhone','custAddr'].forEach(i=>{const el=document.getElementById(i);if(el)el.value='';});
-  if(id){const c=allCustomers.find(x=>x.id===id);if(!c)return;document.getElementById('custId').value=c.id;document.getElementById('custName').value=c.name;document.getElementById('custPhone').value=c.phone||'';document.getElementById('custAddr').value=c.address||'';}
+  document.getElementById('custId').dataset.asLoyalty = asLoyalty ? '1' : '0';
+  if(id){
+    const c=allCustomers.find(x=>x.id===id); if(!c) return;
+    document.getElementById('custId').value=c.id;
+    document.getElementById('custName').value=c.name;
+    document.getElementById('custPhone').value=c.phone||'';
+    document.getElementById('custAddr').value=c.address||'';
+  }
   openModal('modalCustomer');
 }
 async function generateNextCode(){const{data:last}=await db.from('customers').select('unique_code').order('created_at',{ascending:false}).limit(1);let num=1;if(last&&last.length>0&&last[0].unique_code){const n=parseInt(last[0].unique_code.replace('CPS-',''));if(!isNaN(n))num=n+1;}return'CPS-'+String(num).padStart(8,'0');}
 async function saveCustomer(e){
-  e.preventDefault();showLoad();const id=document.getElementById('custId').value;
-  const p={name:document.getElementById('custName').value,phone:document.getElementById('custPhone').value,address:document.getElementById('custAddr').value};
-  if(!id){p.unique_code=await generateNextCode();p.points=lSet.bonusNew||0;p.expired_at=calcExpiryDate();}
-  const{error}=id?await db.from('customers').update(p).eq('id',id):await db.from('customers').insert([p]);
-  hideLoad();if(error)return toast(error.message,false);
-  toast(id?'Pelanggan diperbarui':`Member baru: ${p.unique_code}${p.expired_at?' | Berlaku s/d '+p.expired_at:''}`);closeModal('modalCustomer');refreshApp();
+  e.preventDefault();
+  showLoad();
+  const id = document.getElementById('custId').value;
+  const asLoyalty = document.getElementById('custId').dataset.asLoyalty === '1';
+  const p = {
+    name: document.getElementById('custName').value,
+    phone: document.getElementById('custPhone').value,
+    address: document.getElementById('custAddr').value
+  };
+  // Kode CPS hanya dibuat jika didaftarkan sebagai Loyalty Member
+  if(!id && asLoyalty){
+    p.unique_code = await generateNextCode();
+    p.points = lSet.bonusNew||0;
+    p.expired_at = calcExpiryDate();
+  }
+  const {error} = id
+    ? await db.from('customers').update(p).eq('id',id)
+    : await db.from('customers').insert([p]);
+  hideLoad();
+  if(error) return toast(error.message, false);
+  toast(id ? 'Pelanggan diperbarui' : (asLoyalty ? `Member baru: ${p.unique_code}` : 'Pelanggan ditambahkan'));
+  closeModal('modalCustomer');
+  refreshApp();
 }
 async function renewMember(id){
   const y=new Date().getFullYear();const expiry=`${y}-12-31`;
@@ -1324,7 +1398,7 @@ function printSelectedLabels(){
   const ids=[...document.querySelectorAll('.chk-prod:checked')].map(c=>c.value);
   if(!ids.length)return toast('Pilih minimal 1 produk',false);
   const sel=allProducts.filter(p=>ids.includes(p.id));
-  const html=sel.map(p=>`<div style="width:8cm;height:5cm;display:flex;flex-direction:column;border:1.5px solid #000;page-break-inside:avoid;overflow:hidden;margin-bottom:3mm"><div style="background:#000;color:#fff;display:flex;align-items:center;justify-content:center;padding:8px;font-size:18px;font-weight:900;text-transform:uppercase;text-align:center;font-family:Arial,sans-serif;flex-shrink:0">${p.name}</div><div style="flex:1;display:flex;align-items:center;justify-content:center;font-size:42px;font-weight:900;color:#000;font-family:Arial,sans-serif">${fRp(p.selling_price)}</div><div style="background:#000;color:#fff;text-align:center;font-size:13px;font-weight:700;padding:6px;letter-spacing:3px;font-family:Arial,sans-serif;flex-shrink:0">CILEGON PETSHOP</div></div>`).join('');
+  const html=sel.map(p=>`<div style="width:7cm;height:5cm;display:flex;flex-direction:column;border:1.5px solid #000;page-break-inside:avoid;overflow:hidden;margin-bottom:3mm"><div style="background:#000;color:#fff;display:flex;align-items:center;justify-content:center;padding:8px;font-size:18px;font-weight:900;text-transform:uppercase;text-align:center;font-family:Arial,sans-serif;flex-shrink:0">${p.name}</div><div style="flex:1;display:flex;align-items:center;justify-content:center;font-size:42px;font-weight:900;color:#000;font-family:Arial,sans-serif">${fRp(p.selling_price)}</div><div style="background:#000;color:#fff;text-align:center;font-size:13px;font-weight:700;padding:6px;letter-spacing:3px;font-family:Arial,sans-serif;flex-shrink:0">CILEGON PETSHOP</div></div>`).join('');
   const win=window.open('','_blank','width=800,height=600');
   win.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Label Harga</title><style>@page{margin:5mm;size:A4}body{margin:0;padding:5mm;display:flex;flex-wrap:wrap;gap:3mm;background:#fff}@media print{body{padding:0}}</style></head><body>${html}<script>window.onload=function(){window.print();}<\/script></body></html>`);
   win.document.close();
@@ -1559,6 +1633,129 @@ async function loadFinance(){
   if(exp)document.getElementById('tbFinance').innerHTML=exp.map(x=>`<tr><td>${x.date}</td><td>${x.category}</td><td class="font-medium">${x.vendor}</td><td class="text-right font-bold" style="color:var(--p)">${fRp(x.total)}</td></tr>`).join('');
 }
 function printReport(type){if(type==='summary'){document.getElementById('summaryPrintArea').classList.add('rpt-area');document.body.classList.add('print-report');setTimeout(()=>{window.print();document.body.classList.remove('print-report');document.getElementById('summaryPrintArea').classList.remove('rpt-area');},200);}}
+function downloadCSV(filename, rows){
+  const csv = rows.map(r => r.map(c => `"${String(c).replace(/"/g,'""')}"`).join(',')).join('\n');
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob(['\uFEFF'+csv],{type:'text/csv;charset=utf-8'}));
+  a.download = filename; document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  toast('File CSV diunduh');
+}
+
+async function exportSalesCSV(){
+  showLoad();
+  const s=document.getElementById('filterSaleS').value, e=document.getElementById('filterSaleE').value;
+  const {data} = await db.from('sales').select('*').gte('date',s).lte('date',e).order('created_at',{ascending:false});
+  hideLoad(); if(!data||!data.length) return toast('Tidak ada data',false);
+  const rows = [['Invoice','Tanggal','Pelanggan','Sumber','Kasir','Total Nominal','Diskon','Total Bayar']];
+  data.forEach(s=>rows.push([s.id,s.date,s.buyer_name,s.source||'—',s.cashier||'—',s.total_nominal,s.discount||0,s.total_payment]));
+  downloadCSV(`histori_transaksi_${s}_${e}.csv`, rows);
+}
+
+async function exportFinanceCSV(){
+  showLoad();
+  const s=document.getElementById('filterFinS').value, e=document.getElementById('filterFinE').value;
+  const [{data:sls},{data:exp}] = await Promise.all([
+    db.from('sales').select('id,date,buyer_name,total_payment').gte('date',s).lte('date',e),
+    db.from('expenses').select('*').gte('date',s).lte('date',e)
+  ]);
+  hideLoad();
+  const rows = [['Tipe','Tanggal','Keterangan','Nominal']];
+  (sls||[]).forEach(x=>rows.push(['Pemasukan',x.date,x.buyer_name,x.total_payment]));
+  (exp||[]).forEach(x=>rows.push(['Pengeluaran',x.date,`${x.category} - ${x.vendor}`,x.total]));
+  downloadCSV(`laba_rugi_${s}_${e}.csv`, rows);
+}
+
+// ===== HARGA VENDOR =====
+let vendorCols = []; // [{id, name}]
+let vendorPrices = {}; // {productId: {vendorId: price}}
+
+function loadVendorPrice(){
+  const saved = localStorage.getItem('cp_vendor');
+  if(saved){ const d=JSON.parse(saved); vendorCols=d.cols||[]; vendorPrices=d.prices||{}; }
+  if(vendorCols.length===0) vendorCols=[{id:'v1',name:'Vendor A'},{id:'v2',name:'Vendor B'}];
+  renderVendorTable();
+}
+
+function saveVendorPrices(){
+  // Collect prices from inputs
+  document.querySelectorAll('#vendorBody tr').forEach(tr=>{
+    const pid = tr.dataset.pid;
+    if(!pid) return;
+    if(!vendorPrices[pid]) vendorPrices[pid]={};
+    vendorCols.forEach(v=>{
+      const inp = tr.querySelector(`[data-vid="${v.id}"]`);
+      if(inp) vendorPrices[pid][v.id] = parseFloat(inp.value)||0;
+    });
+  });
+  localStorage.setItem('cp_vendor', JSON.stringify({cols:vendorCols, prices:vendorPrices}));
+  toast('Harga vendor disimpan');
+}
+
+function addVendorCol(){
+  const id = 'v'+Date.now();
+  vendorCols.push({id, name:'Vendor Baru'});
+  renderVendorTable();
+  // Focus the new header
+  setTimeout(()=>{
+    const inp = document.querySelector(`[data-vhead="${id}"]`);
+    if(inp){ inp.focus(); inp.select(); }
+  },100);
+}
+
+function removeVendorCol(id){
+  if(vendorCols.length<=1) return toast('Minimal 1 vendor',false);
+  if(!confirm('Hapus kolom vendor ini?')) return;
+  vendorCols = vendorCols.filter(v=>v.id!==id);
+  vendorCols.forEach(v=>{ if(vendorPrices) Object.values(vendorPrices).forEach(p=>{ /* keep */ }); });
+  renderVendorTable();
+}
+
+function renderVendorTable(){
+  // Header
+  let th = `<tr>
+    <th class="text-left w-8">#</th>
+    <th class="text-left">Nama Produk</th>
+    <th class="text-right w-28">Harga Jual</th>`;
+  vendorCols.forEach(v=>{
+    th += `<th class="text-right" style="min-width:120px">
+      <div class="flex items-center justify-end gap-1">
+        <input type="text" value="${v.name}" data-vhead="${v.id}"
+          class="text-right font-bold text-xs bg-transparent outline-none border-b w-24"
+          style="border-color:var(--border)"
+          onchange="vendorCols.find(x=>x.id==='${v.id}').name=this.value">
+        <button onclick="removeVendorCol('${v.id}')" class="text-gray-300 hover:text-red-400 text-xs ml-1"><i class="fas fa-times"></i></button>
+      </div>
+    </th>`;
+  });
+  th += '</tr>';
+  document.getElementById('vendorHead').innerHTML = th;
+
+  // Body
+  let rows = '';
+  allProducts.forEach((p,i)=>{
+    const prices = vendorPrices[p.id]||{};
+    let cells = vendorCols.map(v=>{
+      const val = prices[v.id]||'';
+      return `<td class="text-right">
+        <input type="number" min="0" value="${val}" data-vid="${v.id}"
+          class="inp inp-sm text-right" style="max-width:110px"
+          placeholder="0">
+      </td>`;
+    }).join('');
+
+    // Highlight cheapest vendor
+    rows += `<tr data-pid="${p.id}" class="hover:bg-gray-50">
+      <td class="text-center text-gray-400 text-sm">${i+1}</td>
+      <td>
+        <div class="font-bold text-sm">${p.name}</div>
+        <div class="text-xs text-gray-400">${p.category}</div>
+      </td>
+      <td class="text-right font-bold text-green-600 text-sm">${fRp(p.selling_price)}</td>
+      ${cells}
+    </tr>`;
+  });
+  document.getElementById('vendorBody').innerHTML = rows;
+}
 
 // ===== GENERIC DELETE =====
 async function deleteData(tbl,id,cb){if(!confirm('Hapus permanen? Data tidak bisa dipulihkan.'))return;showLoad();const{error}=await db.from(tbl).delete().eq('id',id);hideLoad();if(error)return toast(error.message,false);toast('Data terhapus');logAct('Hapus',`Hapus dari ${tbl}`);if(typeof cb==='function')cb();}
