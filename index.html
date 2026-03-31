@@ -1099,7 +1099,9 @@ window.onload=async()=>{
   const saved=sessionStorage.getItem('cp_user');
   if(saved){currentUser=JSON.parse(saved);await initApp();}
   else{document.getElementById('loginScreen').style.display='flex';}
-  loadReceiptSettings();loadLoyaltySettings();loadPlatformSettings();
+  await loadPlatformSettings();
+  await loadReceiptSettingsFromDB();
+  await loadLoyaltySettings();
   ['posDate','stkDate','expDate','sumStart','sumEnd','filterSaleS','filterSaleE','filterFinS','filterFinE','coDate'].forEach(id=>{const el=document.getElementById(id);if(el)el.value=getToday();});
   const now=new Date();const mEl=document.getElementById('dashMonth');
   if(mEl)mEl.value=`${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
@@ -1475,7 +1477,17 @@ window.onload=()=>setTimeout(()=>window.print(),1200);
 }
 
 // ===== LOYALTY SETTINGS =====
-function loadLoyaltySettings(){const s=localStorage.getItem('cp_loyalty');if(s)lSet=Object.assign(lSet,JSON.parse(s));}
+async function loadLoyaltySettings(){
+  const {data}=await db.from('app_settings').select('*').like('key','loyalty_%');
+  if(data&&data.length){
+    data.forEach(row=>{
+      const k=row.key.replace('loyalty_','');
+      if(k==='active') lSet[k]=row.value==='true';
+      else if(k==='perRp'||k==='bonusNew'||k==='minBuy'||k==='expiryMonths') lSet[k]=parseInt(row.value)||0;
+      else if(k in lSet) lSet[k]=row.value;
+    });
+  }
+}
 function toggleExpiryType(){
   const t=document.getElementById('lsExpiryType').value;
   document.getElementById('expiryMonthsRow').classList.toggle('hidden',t!=='months');
@@ -1488,9 +1500,20 @@ function loadLoyaltySettingsView(){
   document.getElementById('lsPerRp').value=lSet.perRp;document.getElementById('lsBonusNew').value=lSet.bonusNew;document.getElementById('lsMinBuy').value=lSet.minBuy;document.getElementById('lsActive').checked=lSet.active;document.getElementById('lsExpiryType').value=lSet.expiryType||'yearend';document.getElementById('lsExpiryMonths').value=lSet.expiryMonths||12;
   toggleExpiryType();updateLoyaltySummary();
 }
-function saveLoyaltySettings(){
-  lSet.perRp=parseInt(document.getElementById('lsPerRp').value)||10000;lSet.bonusNew=parseInt(document.getElementById('lsBonusNew').value)||0;lSet.minBuy=parseInt(document.getElementById('lsMinBuy').value)||0;lSet.active=document.getElementById('lsActive').checked;lSet.expiryType=document.getElementById('lsExpiryType').value;lSet.expiryMonths=parseInt(document.getElementById('lsExpiryMonths').value)||12;
-  localStorage.setItem('cp_loyalty',JSON.stringify(lSet));toast('Setting loyalty disimpan');updateLoyaltySummary();
+async function saveLoyaltySettings(){
+  lSet.perRp=parseInt(document.getElementById('lsPerRp').value)||10000;
+  lSet.bonusNew=parseInt(document.getElementById('lsBonusNew').value)||0;
+  lSet.minBuy=parseInt(document.getElementById('lsMinBuy').value)||0;
+  lSet.active=document.getElementById('lsActive').checked;
+  lSet.expiryType=document.getElementById('lsExpiryType').value;
+  lSet.expiryMonths=parseInt(document.getElementById('lsExpiryMonths').value)||12;
+  showLoad();
+  for(const [key,value] of Object.entries(lSet)){
+    await db.from('app_settings').upsert({key:'loyalty_'+key,value:String(value),updated_at:new Date().toISOString()},{onConflict:'key'});
+  }
+  hideLoad();
+  toast('Setting loyalty disimpan ke database ✓');
+  updateLoyaltySummary();
 }
 function updateLoyaltySummary(){
   const el=document.getElementById('loyaltySummary');if(!el)return;
@@ -1615,7 +1638,44 @@ function loadReceiptSettings(){
   if(rSet.logo){const lb=document.getElementById('logoPreviewBox');if(lb)lb.innerHTML=`<img src="${rSet.logo}" class="w-full h-full object-contain p-1">`;const pv=document.getElementById('pv_logo_wrap');if(pv){pv.classList.remove('hidden');document.getElementById('pv_logo').src=rSet.logo;}document.getElementById('ps_logo').src=rSet.logo;document.getElementById('ps_logo_wrap').style.display='block';}
   updateReceiptPreview();
 }
-function saveReceiptSettings(){rSet.storeName=document.getElementById('setStoreName')?.value||'CILEGON PETSHOP';rSet.storeAddr=document.getElementById('setStoreAddr')?.value||'';rSet.no=document.getElementById('setNo')?.checked??true;rSet.kasir=document.getElementById('setKasir')?.checked??true;rSet.footer=document.getElementById('setFooter')?.checked??true;rSet.txt=document.getElementById('txtFooter')?.value||'';localStorage.setItem('cp_receipt',JSON.stringify(rSet));updateReceiptPreview();toast('Setting struk disimpan');}
+function saveReceiptSettings(){
+  rSet.storeName=document.getElementById('setStoreName')?.value||'CILEGON PETSHOP';
+  rSet.storeAddr=document.getElementById('setStoreAddr')?.value||'';
+  rSet.no=document.getElementById('setNo')?.checked??true;
+  rSet.kasir=document.getElementById('setKasir')?.checked??true;
+  rSet.footer=document.getElementById('setFooter')?.checked??true;
+  rSet.txt=document.getElementById('txtFooter')?.value||'';
+  updateReceiptPreview();
+  saveReceiptSettingsToDB();
+  toast('Setting struk disimpan');
+}
+
+async function saveReceiptSettingsToDB(){
+  for(const [key, value] of Object.entries(rSet)){
+    await db.from('app_settings').upsert({key:'receipt_'+key, value:String(value), updated_at:new Date().toISOString()},{onConflict:'key'});
+  }
+}
+
+async function loadReceiptSettingsFromDB(){
+  const {data}=await db.from('app_settings').select('*').like('key','receipt_%');
+  if(data&&data.length){
+    data.forEach(row=>{
+      const k=row.key.replace('receipt_','');
+      if(k==='no'||k==='kasir'||k==='footer') rSet[k]=row.value==='true';
+      else if(k in rSet) rSet[k]=row.value;
+    });
+  }
+  const set=(id,val)=>{const el=document.getElementById(id);if(el)el.value=val;};
+  const chk=(id,val)=>{const el=document.getElementById(id);if(el)el.checked=val;};
+  set('setStoreName',rSet.storeName);set('setStoreAddr',rSet.storeAddr);set('txtFooter',rSet.txt);
+  chk('setNo',rSet.no);chk('setKasir',rSet.kasir);chk('setFooter',rSet.footer);
+  if(rSet.logo){
+    const lb=document.getElementById('logoPreviewBox');if(lb)lb.innerHTML=`<img src="${rSet.logo}" class="w-full h-full object-contain p-1">`;
+    const pv=document.getElementById('pv_logo_wrap');if(pv){pv.classList.remove('hidden');document.getElementById('pv_logo').src=rSet.logo;}
+    document.getElementById('ps_logo').src=rSet.logo;document.getElementById('ps_logo_wrap').style.display='block';
+  }
+  updateReceiptPreview();
+}
 function onLogoUpload(e){const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=x=>{rSet.logo=x.target.result;localStorage.setItem('cp_receipt',JSON.stringify(rSet));const lb=document.getElementById('logoPreviewBox');if(lb)lb.innerHTML=`<img src="${rSet.logo}" class="w-full h-full object-contain p-1">`;const pv=document.getElementById('pv_logo_wrap');if(pv){pv.classList.remove('hidden');document.getElementById('pv_logo').src=rSet.logo;}document.getElementById('ps_logo').src=rSet.logo;document.getElementById('ps_logo_wrap').style.display='block';toast('Logo diupload');};r.readAsDataURL(f);}
 function clearLogo(){rSet.logo='';localStorage.setItem('cp_receipt',JSON.stringify(rSet));document.getElementById('logoPreviewBox').innerHTML='<i class="fas fa-image text-gray-300 text-xl"></i>';const pv=document.getElementById('pv_logo_wrap');if(pv)pv.classList.add('hidden');document.getElementById('ps_logo_wrap').style.display='none';}
 function updateReceiptPreview(){const set=(id,t)=>{const el=document.getElementById(id);if(el)el.innerText=t;};set('pv_store',rSet.storeName||'CILEGON PETSHOP');set('pv_addr',rSet.storeAddr||'');const pf=document.getElementById('pv_footer');if(pf)pf.innerText=rSet.footer?rSet.txt:'';}
@@ -1790,232 +1850,237 @@ async function exportFinanceCSV(){
   downloadCSV(`laba_rugi_${s}_${e}.csv`, rows);
 }
 
-// ===== HARGA VENDOR =====
-let vendorCols = []; // [{id, name}]
-let vendorPrices = {}; // {productId: {vendorId: price}}
+// ===== HARGA VENDOR (DB) =====
+let vendorCols = [];
+let vendorPrices = {};
 
-function loadVendorPrice(){
-  const saved = localStorage.getItem('cp_vendor');
-  if(saved){ const d=JSON.parse(saved); vendorCols=d.cols||[]; vendorPrices=d.prices||{}; }
-  if(vendorCols.length===0) vendorCols=[{id:'v1',name:'Vendor A'},{id:'v2',name:'Vendor B'}];
+async function loadVendorPrice(){
+  showLoad();
+  const [{data:cols},{data:prices}] = await Promise.all([
+    db.from('vendor_columns').select('*').order('sort_order'),
+    db.from('vendor_prices').select('*')
+  ]);
+  hideLoad();
+  vendorCols = cols||[];
+  vendorPrices = {};
+  (prices||[]).forEach(r=>{ if(!vendorPrices[r.product_id])vendorPrices[r.product_id]={}; vendorPrices[r.product_id][r.vendor_id]=r.price; });
   renderVendorTable();
 }
 
-function saveVendorPrices(){
-  // Collect prices from inputs
+async function saveVendorPrices(){
+  showLoad();
+  // Collect from inputs
+  const upserts=[];
   document.querySelectorAll('#vendorBody tr').forEach(tr=>{
-    const pid = tr.dataset.pid;
-    if(!pid) return;
-    if(!vendorPrices[pid]) vendorPrices[pid]={};
+    const pid=tr.dataset.pid; if(!pid)return;
     vendorCols.forEach(v=>{
-      const inp = tr.querySelector(`[data-vid="${v.id}"]`);
-      if(inp) vendorPrices[pid][v.id] = parseFloat(inp.value)||0;
+      const inp=tr.querySelector(`[data-vid="${v.id}"]`);
+      if(inp){
+        const price=parseFloat(inp.value)||0;
+        upserts.push({product_id:pid, vendor_id:v.id, price});
+      }
     });
   });
-  localStorage.setItem('cp_vendor', JSON.stringify({cols:vendorCols, prices:vendorPrices}));
-  toast('Harga vendor disimpan');
+  if(upserts.length){
+    await db.from('vendor_prices').upsert(upserts,{onConflict:'product_id,vendor_id'});
+  }
+  hideLoad(); toast('Harga vendor disimpan ke database ✓');
 }
 
-function addVendorCol(){
-  const id = 'v'+Date.now();
-  vendorCols.push({id, name:'Vendor Baru'});
+async function addVendorCol(){
+  showLoad();
+  const {data,error}=await db.from('vendor_columns').insert([{name:'Vendor Baru',sort_order:vendorCols.length+1}]).select();
+  hideLoad(); if(error)return toast(error.message,false);
+  vendorCols.push(data[0]);
   renderVendorTable();
-  // Focus the new header
-  setTimeout(()=>{
-    const inp = document.querySelector(`[data-vhead="${id}"]`);
-    if(inp){ inp.focus(); inp.select(); }
-  },100);
+  setTimeout(()=>{ const inp=document.querySelector(`[data-vhead="${data[0].id}"]`); if(inp){inp.focus();inp.select();} },100);
 }
 
-function removeVendorCol(id){
-  if(vendorCols.length<=1) return toast('Minimal 1 vendor',false);
-  if(!confirm('Hapus kolom vendor ini?')) return;
-  vendorCols = vendorCols.filter(v=>v.id!==id);
-  vendorCols.forEach(v=>{ if(vendorPrices) Object.values(vendorPrices).forEach(p=>{ /* keep */ }); });
-  renderVendorTable();
+async function removeVendorCol(id){
+  if(vendorCols.length<=1)return toast('Minimal 1 vendor',false);
+  if(!confirm('Hapus kolom vendor ini? Semua harga vendor ini akan terhapus.'))return;
+  showLoad();
+  await db.from('vendor_prices').delete().eq('vendor_id',id);
+  await db.from('vendor_columns').delete().eq('id',id);
+  hideLoad();
+  vendorCols=vendorCols.filter(v=>v.id!==id);
+  renderVendorTable(); toast('Vendor dihapus');
+}
+
+async function saveVendorColName(id, name){
+  await db.from('vendor_columns').update({name}).eq('id',id);
 }
 
 function renderVendorTable(){
-  // Header
-  let th = `<tr>
-    <th class="text-left w-8">#</th>
-    <th class="text-left">Nama Produk</th>
-    <th class="text-right w-28">Harga Jual</th>`;
+  let th=`<tr><th class="text-center w-8">#</th><th>Nama Produk</th><th class="text-right w-28">Harga Jual</th>`;
   vendorCols.forEach(v=>{
-    th += `<th class="text-right" style="min-width:120px">
-      <div class="flex items-center justify-end gap-1">
-        <input type="text" value="${v.name}" data-vhead="${v.id}"
-          class="text-right font-bold text-xs bg-transparent outline-none border-b w-24"
-          style="border-color:var(--border)"
-          onchange="vendorCols.find(x=>x.id==='${v.id}').name=this.value">
-        <button onclick="removeVendorCol('${v.id}')" class="text-gray-300 hover:text-red-400 text-xs ml-1"><i class="fas fa-times"></i></button>
-      </div>
-    </th>`;
+    th+=`<th class="text-right" style="min-width:130px"><div class="flex items-center justify-end gap-1">
+      <input type="text" value="${v.name}" data-vhead="${v.id}"
+        class="text-right font-bold text-xs bg-transparent outline-none border-b w-24" style="border-color:var(--border)"
+        onchange="saveVendorColName('${v.id}',this.value)">
+      <button onclick="removeVendorCol('${v.id}')" class="text-gray-300 hover:text-red-400 text-xs ml-1"><i class="fas fa-times"></i></button>
+    </div></th>`;
   });
-  th += '</tr>';
-  document.getElementById('vendorHead').innerHTML = th;
+  th+='</tr>';
+  document.getElementById('vendorHead').innerHTML=th;
 
-  // Body
-  let rows = '';
+  let rows='';
   allProducts.forEach((p,i)=>{
-    const prices = vendorPrices[p.id]||{};
-    let cells = vendorCols.map(v=>{
-      const val = prices[v.id]||'';
-      return `<td class="text-right">
-        <input type="number" min="0" value="${val}" data-vid="${v.id}"
-          class="inp inp-sm text-right" style="max-width:110px"
-          placeholder="0">
-      </td>`;
+    const prices=vendorPrices[p.id]||{};
+    const cells=vendorCols.map(v=>{
+      const val=prices[v.id]||'';
+      const cheapest=vendorCols.every(vc=>!prices[vc.id]||prices[v.id]<=prices[vc.id]);
+      const style=val&&cheapest?'color:#16a34a;font-weight:700':'';
+      return `<td class="text-right"><input type="number" min="0" value="${val}" data-vid="${v.id}" class="inp inp-sm text-right" style="max-width:110px;${style}" placeholder="0"></td>`;
     }).join('');
-
-    // Highlight cheapest vendor
-    rows += `<tr data-pid="${p.id}" class="hover:bg-gray-50">
+    rows+=`<tr data-pid="${p.id}" class="hover:bg-gray-50">
       <td class="text-center text-gray-400 text-sm">${i+1}</td>
-      <td>
-        <div class="font-bold text-sm">${p.name}</div>
-        <div class="text-xs text-gray-400">${p.category}</div>
-      </td>
+      <td><div class="font-bold text-sm">${p.name}</div><div class="text-xs text-gray-400">${p.category}</div></td>
       <td class="text-right font-bold text-green-600 text-sm">${fRp(p.selling_price)}</td>
       ${cells}
     </tr>`;
   });
-  document.getElementById('vendorBody').innerHTML = rows;
+  document.getElementById('vendorBody').innerHTML=rows;
 }
-// ===== PLATFORM SETTINGS =====
+// ===== PLATFORM SETTINGS (DB) =====
 let pltSet = {
-  appName: 'Cilegon Petshop',
-  title: 'Cilegon Petshop — POS',
-  tagline: 'Sistem POS Terpadu',
-  color: '#e11d48',
-  favicon: '',
-  logo: ''
+  appName:'Cilegon Petshop', title:'Cilegon Petshop — POS',
+  tagline:'Sistem POS Terpadu', color:'#e11d48', favicon:'', logo:''
 };
 
-function loadPlatformSettings(){
-  const s = localStorage.getItem('cp_platform');
-  if(s) pltSet = Object.assign(pltSet, JSON.parse(s));
+async function loadPlatformSettings(){
+  const {data} = await db.from('app_settings').select('*');
+  if(data && data.length){
+    data.forEach(row => {
+      if(row.key in pltSet) pltSet[row.key] = row.value;
+    });
+  }
   applyPlatformSettings();
 }
 
+async function savePlatformSettings(){
+  pltSet.appName  = document.getElementById('pltAppName').value  || 'Cilegon Petshop';
+  pltSet.title    = document.getElementById('pltTitle').value    || 'Cilegon Petshop — POS';
+  pltSet.tagline  = document.getElementById('pltTagline').value  || 'Sistem POS Terpadu';
+  pltSet.color    = document.getElementById('pltColor').value    || '#e11d48';
+  showLoad();
+  // Upsert setiap key
+  for(const [key, value] of Object.entries(pltSet)){
+    await db.from('app_settings').upsert({key, value, updated_at: new Date().toISOString()}, {onConflict:'key'});
+  }
+  // Sync ke struk
+  rSet.storeName = pltSet.appName.toUpperCase();
+  if(pltSet.logo) rSet.logo = pltSet.logo;
+  await saveReceiptSettingsToDB();
+  hideLoad();
+  applyPlatformSettings();
+  toast('Setting platform disimpan ke database ✓');
+}
+
+async function resetPlatformSettings(){
+  if(!confirm('Reset semua setting platform ke default?')) return;
+  pltSet = {appName:'Cilegon Petshop',title:'Cilegon Petshop — POS',tagline:'Sistem POS Terpadu',color:'#e11d48',favicon:'',logo:''};
+  showLoad();
+  for(const [key, value] of Object.entries(pltSet)){
+    await db.from('app_settings').upsert({key, value, updated_at: new Date().toISOString()},{onConflict:'key'});
+  }
+  hideLoad();
+  loadPlatformSettingsView();
+  applyPlatformSettings();
+  toast('Setting direset ke default');
+}
+
 function applyPlatformSettings(){
-  // Title
   document.title = pltSet.title || 'Cilegon Petshop — POS';
-
-  // Favicon
   if(pltSet.favicon){
-    let link = document.querySelector("link[rel~='icon']");
-    if(!link){ link=document.createElement('link'); link.rel='icon'; document.head.appendChild(link); }
-    link.href = pltSet.favicon;
+    let link=document.querySelector("link[rel~='icon']");
+    if(!link){link=document.createElement('link');link.rel='icon';document.head.appendChild(link);}
+    link.href=pltSet.favicon;
   }
-
-  // CSS color variable
   if(pltSet.color){
-    document.documentElement.style.setProperty('--p', pltSet.color);
-    document.documentElement.style.setProperty('--pd', darkenColor(pltSet.color, 20));
+    document.documentElement.style.setProperty('--p',pltSet.color);
+    document.documentElement.style.setProperty('--pd',darkenColor(pltSet.color,20));
   }
-
-  // App name di sidebar
-  const sbName = document.querySelector('.sb-logo-text p.font-bold');
-  if(sbName) sbName.innerText = pltSet.appName;
-
-  // Logo di sidebar
-  const sbImg = document.querySelector('#sidebar img');
-  if(sbImg && pltSet.logo) sbImg.src = pltSet.logo;
-
-  // Logo di login
-  const loginImg = document.querySelector('#loginScreen img');
-  if(loginImg && pltSet.logo) loginImg.src = pltSet.logo;
-
-  // App name di login
-  const loginName = document.querySelector('#loginScreen .font-black.text-base');
-  if(loginName) loginName.innerText = pltSet.appName;
-
-  // Tagline di login
-  const loginTag = document.querySelector('#loginScreen .text-xs.text-gray-400');
-  if(loginTag) loginTag.innerText = pltSet.tagline;
-
-  // Struk storeName otomatis sync jika belum pernah di-set manual
-  if(!rSet.storeName || rSet.storeName === 'CILEGON PETSHOP'){
-    rSet.storeName = pltSet.appName.toUpperCase();
-    if(document.getElementById('ps_store')) document.getElementById('ps_store').innerText = rSet.storeName;
+  const sbName=document.querySelector('.sb-logo-text p.font-bold');
+  if(sbName)sbName.innerText=pltSet.appName;
+  const sbImg=document.querySelector('#sidebar img');
+  if(sbImg&&pltSet.logo)sbImg.src=pltSet.logo;
+  const loginImg=document.querySelector('#loginScreen img');
+  if(loginImg&&pltSet.logo)loginImg.src=pltSet.logo;
+  const loginName=document.querySelector('#loginScreen .font-black.text-base');
+  if(loginName)loginName.innerText=pltSet.appName;
+  const loginTag=document.querySelector('#loginScreen .text-xs.text-gray-400');
+  if(loginTag)loginTag.innerText=pltSet.tagline;
+  if(!rSet.storeName||rSet.storeName==='CILEGON PETSHOP'){
+    rSet.storeName=pltSet.appName.toUpperCase();
+    if(document.getElementById('ps_store'))document.getElementById('ps_store').innerText=rSet.storeName;
   }
-
-  // Struk logo sync
-  if(pltSet.logo && !rSet.logo){
-    rSet.logo = pltSet.logo;
-    if(document.getElementById('ps_logo')){ document.getElementById('ps_logo').src=pltSet.logo; document.getElementById('ps_logo_wrap').style.display='block'; }
+  if(pltSet.logo&&!rSet.logo){
+    rSet.logo=pltSet.logo;
+    if(document.getElementById('ps_logo')){document.getElementById('ps_logo').src=pltSet.logo;document.getElementById('ps_logo_wrap').style.display='block';}
   }
 }
 
-function darkenColor(hex, amount){
-  hex = hex.replace('#','');
-  const num = parseInt(hex,16);
-  const r = Math.max(0, (num>>16)-amount);
-  const g = Math.max(0, ((num>>8)&0xff)-amount);
-  const b = Math.max(0, (num&0xff)-amount);
+function darkenColor(hex,amount){
+  hex=hex.replace('#','');const num=parseInt(hex,16);
+  const r=Math.max(0,(num>>16)-amount),g=Math.max(0,((num>>8)&0xff)-amount),b=Math.max(0,(num&0xff)-amount);
   return '#'+[r,g,b].map(x=>x.toString(16).padStart(2,'0')).join('');
 }
 
 function loadPlatformSettingsView(){
-  document.getElementById('pltAppName').value = pltSet.appName;
-  document.getElementById('pltTitle').value = pltSet.title;
-  document.getElementById('pltTagline').value = pltSet.tagline;
-  document.getElementById('pltColor').value = pltSet.color;
-  document.getElementById('pltColorHex').value = pltSet.color;
-  // Logo preview
+  document.getElementById('pltAppName').value=pltSet.appName;
+  document.getElementById('pltTitle').value=pltSet.title;
+  document.getElementById('pltTagline').value=pltSet.tagline;
+  document.getElementById('pltColor').value=pltSet.color;
+  document.getElementById('pltColorHex').value=pltSet.color;
   if(pltSet.logo){
-    document.getElementById('pltLogoPreview').innerHTML = `<img src="${pltSet.logo}" class="w-full h-full object-contain p-1">`;
-    document.getElementById('pltPreviewLogoWrap').innerHTML = `<img src="${pltSet.logo}" class="w-full h-full object-contain">`;
-    document.getElementById('pltPreviewStruкLogo').innerHTML = `<img src="${pltSet.logo}" style="height:24px;object-contain">`;
+    document.getElementById('pltLogoPreview').innerHTML=`<img src="${pltSet.logo}" class="w-full h-full object-contain p-1">`;
+    document.getElementById('pltPreviewLogoWrap').innerHTML=`<img src="${pltSet.logo}" class="w-full h-full object-contain">`;
+    document.getElementById('pltPreviewStruкLogo').innerHTML=`<img src="${pltSet.logo}" style="height:24px;object-contain">`;
   }
-  // Favicon preview
   if(pltSet.favicon){
-    document.getElementById('pltFaviconPreview').innerHTML = `<img src="${pltSet.favicon}" class="w-full h-full object-contain p-1">`;
-    document.getElementById('pltPreviewFaviconTab').innerHTML = `<img src="${pltSet.favicon}" style="width:14px;height:14px;object-fit:contain">`;
+    document.getElementById('pltFaviconPreview').innerHTML=`<img src="${pltSet.favicon}" class="w-full h-full object-contain p-1">`;
+    document.getElementById('pltPreviewFaviconTab').innerHTML=`<img src="${pltSet.favicon}" style="width:14px;height:14px;object-fit:contain">`;
   }
   previewPlatform();
 }
 
 function previewPlatform(){
-  const name = document.getElementById('pltAppName').value || 'Nama Aplikasi';
-  const title = document.getElementById('pltTitle').value || 'Nama Aplikasi — POS';
-  const tagline = document.getElementById('pltTagline').value || 'Deskripsi Singkat';
-  const color = document.getElementById('pltColor').value || '#e11d48';
-
-  document.getElementById('pltPreviewName').innerText = name;
-  document.getElementById('pltPreviewName').style.color = color;
-  document.getElementById('pltPreviewTagline').innerText = tagline;
-  document.getElementById('pltPreviewTitle').innerText = title;
-  document.getElementById('pltPreviewBtn').style.background = color;
-  document.getElementById('pltPreviewStruкName').innerText = name.toUpperCase();
-  document.getElementById('pltColorHex').value = color;
+  const name=document.getElementById('pltAppName').value||'Nama Aplikasi';
+  const title=document.getElementById('pltTitle').value||'Nama Aplikasi — POS';
+  const tagline=document.getElementById('pltTagline').value||'Deskripsi Singkat';
+  const color=document.getElementById('pltColor').value||'#e11d48';
+  document.getElementById('pltPreviewName').innerText=name;
+  document.getElementById('pltPreviewName').style.color=color;
+  document.getElementById('pltPreviewTagline').innerText=tagline;
+  document.getElementById('pltPreviewTitle').innerText=title;
+  document.getElementById('pltPreviewBtn').style.background=color;
+  document.getElementById('pltPreviewStruкName').innerText=name.toUpperCase();
+  document.getElementById('pltColorHex').value=color;
 }
 
 function syncColorPicker(){
-  const hex = document.getElementById('pltColorHex').value;
-  if(/^#[0-9a-fA-F]{6}$/.test(hex)){
-    document.getElementById('pltColor').value = hex;
-    previewPlatform();
-  }
+  const hex=document.getElementById('pltColorHex').value;
+  if(/^#[0-9a-fA-F]{6}$/.test(hex)){document.getElementById('pltColor').value=hex;previewPlatform();}
 }
 
 function onFaviconUpload(e){
-  const f=e.target.files[0]; if(!f) return;
-  const r=new FileReader(); r.onload=x=>{
+  const f=e.target.files[0];if(!f)return;
+  const r=new FileReader();r.onload=x=>{
     pltSet.favicon=x.target.result;
     document.getElementById('pltFaviconPreview').innerHTML=`<img src="${pltSet.favicon}" class="w-full h-full object-contain p-1">`;
     document.getElementById('pltPreviewFaviconTab').innerHTML=`<img src="${pltSet.favicon}" style="width:14px;height:14px;object-fit:contain">`;
-  }; r.readAsDataURL(f);
+  };r.readAsDataURL(f);
 }
 
 function onLogoMainUpload(e){
-  const f=e.target.files[0]; if(!f) return;
-  const r=new FileReader(); r.onload=x=>{
+  const f=e.target.files[0];if(!f)return;
+  const r=new FileReader();r.onload=x=>{
     pltSet.logo=x.target.result;
     document.getElementById('pltLogoPreview').innerHTML=`<img src="${pltSet.logo}" class="w-full h-full object-contain p-1">`;
     document.getElementById('pltPreviewLogoWrap').innerHTML=`<img src="${pltSet.logo}" class="w-full h-full object-contain">`;
     document.getElementById('pltPreviewStruкLogo').innerHTML=`<img src="${pltSet.logo}" style="height:24px;object-contain">`;
-  }; r.readAsDataURL(f);
+  };r.readAsDataURL(f);
 }
 
 function clearMainLogo(){
@@ -2023,29 +2088,6 @@ function clearMainLogo(){
   document.getElementById('pltLogoPreview').innerHTML='<i class="fas fa-image text-gray-300 text-xl"></i>';
   document.getElementById('pltPreviewLogoWrap').innerHTML='<i class="fas fa-paw text-gray-400 text-xl"></i>';
   document.getElementById('pltPreviewStruкLogo').innerHTML='<div class="w-8 h-8 bg-gray-100 rounded flex items-center justify-center text-gray-300"><i class="fas fa-image text-xs"></i></div>';
-}
-
-function savePlatformSettings(){
-  pltSet.appName = document.getElementById('pltAppName').value || 'Cilegon Petshop';
-  pltSet.title = document.getElementById('pltTitle').value || 'Cilegon Petshop — POS';
-  pltSet.tagline = document.getElementById('pltTagline').value || 'Sistem POS Terpadu';
-  pltSet.color = document.getElementById('pltColor').value || '#e11d48';
-  localStorage.setItem('cp_platform', JSON.stringify(pltSet));
-  // Sync ke struk
-  rSet.storeName = pltSet.appName.toUpperCase();
-  if(pltSet.logo) rSet.logo = pltSet.logo;
-  localStorage.setItem('cp_receipt', JSON.stringify(rSet));
-  applyPlatformSettings();
-  toast('Setting platform diterapkan ✓');
-}
-
-function resetPlatformSettings(){
-  if(!confirm('Reset semua setting platform ke default?')) return;
-  localStorage.removeItem('cp_platform');
-  pltSet = {appName:'Cilegon Petshop',title:'Cilegon Petshop — POS',tagline:'Sistem POS Terpadu',color:'#e11d48',favicon:'',logo:''};
-  loadPlatformSettingsView();
-  applyPlatformSettings();
-  toast('Setting direset ke default');
 }
 // ===== GENERIC DELETE =====
 async function deleteData(tbl,id,cb){if(!confirm('Hapus permanen? Data tidak bisa dipulihkan.'))return;showLoad();const{error}=await db.from(tbl).delete().eq('id',id);hideLoad();if(error)return toast(error.message,false);toast('Data terhapus');logAct('Hapus',`Hapus dari ${tbl}`);if(typeof cb==='function')cb();}
