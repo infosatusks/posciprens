@@ -322,6 +322,7 @@ input:checked+.slider:before{transform:translateX(18px)}
           <a href="#" onclick="nav('categories')" id="menu-categories" class="menu-item text-sm py-2"><i class="fas fa-tags"></i><span class="sb-label">Kategori</span></a>
           <a href="#" onclick="nav('sources')" id="menu-sources" class="menu-item text-sm py-2"><i class="fas fa-store"></i><span class="sb-label">Sumber Transaksi</span></a>
           <a href="#" onclick="nav('printsettings')" id="menu-printsettings" class="menu-item text-sm py-2"><i class="fas fa-receipt"></i><span class="sb-label">Setting Struk</span></a>
+          <a href="#" onclick="nav('platformsettings')" id="menu-platformsettings" class="menu-item text-sm py-2"><i class="fas fa-globe"></i><span class="sb-label">Setting Platform</span></a>
         </div>
       </div>
     </nav>
@@ -408,6 +409,129 @@ input:checked+.slider:before{transform:translateX(18px)}
           <div class="p-4 border-t flex items-center justify-between bg-gray-50 text-sm" style="border-color:var(--border)">
             <span class="text-gray-500"><span id="posTotalItem" class="font-bold text-gray-800">0</span> item</span>
             <div class="text-right"><div class="text-xs text-gray-400">Subtotal</div><div class="font-bold" id="posTotalNominal">Rp 0</div></div>
+          </div>
+        </div>
+      </div>
+      <!-- SETTING PLATFORM -->
+      <div id="view-platformsettings" class="view-section hidden p-5">
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
+          <!-- Form -->
+          <div class="card p-6 space-y-5">
+            <div>
+              <h3 class="font-bold text-base mb-1">Setting Platform</h3>
+              <p class="text-xs text-gray-400">Ubah identitas aplikasi. Berguna untuk menjual platform ke bisnis lain.</p>
+            </div>
+
+            <!-- App Name -->
+            <div>
+              <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5">Nama Aplikasi / Toko</label>
+              <input type="text" id="pltAppName" class="inp" placeholder="Cilegon Petshop" oninput="previewPlatform()">
+              <p class="text-xs text-gray-400 mt-1">Muncul di sidebar, struk, kartu member, dan halaman login</p>
+            </div>
+
+            <!-- Website Title -->
+            <div>
+              <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5">Judul Website (Tab Browser)</label>
+              <input type="text" id="pltTitle" class="inp" placeholder="Cilegon Petshop — POS" oninput="previewPlatform()">
+            </div>
+
+            <!-- Tagline -->
+            <div>
+              <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5">Tagline / Deskripsi Singkat</label>
+              <input type="text" id="pltTagline" class="inp" placeholder="Sistem POS Terpadu" oninput="previewPlatform()">
+            </div>
+
+            <!-- Favicon -->
+            <div>
+              <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Favicon (Icon Tab Browser)</label>
+              <div class="flex items-center gap-3">
+                <div class="w-12 h-12 rounded-xl bg-gray-100 border flex items-center justify-center overflow-hidden flex-shrink-0" style="border-color:var(--border)" id="pltFaviconPreview">
+                  <i class="fas fa-globe text-gray-300 text-lg"></i>
+                </div>
+                <div class="flex-1 space-y-1">
+                  <input type="file" id="pltFaviconFile" accept="image/*" class="hidden" onchange="onFaviconUpload(event)">
+                  <button onclick="document.getElementById('pltFaviconFile').click()" class="btn btn-secondary btn-sm w-full"><i class="fas fa-upload"></i> Upload Favicon</button>
+                  <p class="text-xs text-gray-400 text-center">Rekomendasi: 32×32px atau 64×64px</p>
+                </div>
+              </div>
+            </div>
+
+            <!-- Logo -->
+            <div>
+              <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Logo Utama</label>
+              <div class="flex items-center gap-3">
+                <div class="w-16 h-16 rounded-xl bg-gray-100 border flex items-center justify-center overflow-hidden flex-shrink-0" style="border-color:var(--border)" id="pltLogoPreview">
+                  <i class="fas fa-image text-gray-300 text-xl"></i>
+                </div>
+                <div class="flex-1 space-y-1">
+                  <input type="file" id="pltLogoFile" accept="image/*" class="hidden" onchange="onLogoMainUpload(event)">
+                  <button onclick="document.getElementById('pltLogoFile').click()" class="btn btn-secondary btn-sm w-full"><i class="fas fa-upload"></i> Upload Logo</button>
+                  <button onclick="clearMainLogo()" class="btn btn-xs w-full" style="background:#f3f4f6;color:#6b7280">Hapus Logo</button>
+                  <p class="text-xs text-gray-400 text-center">Muncul di sidebar, login, struk, dan kartu member</p>
+                </div>
+              </div>
+            </div>
+
+            <!-- Accent color -->
+            <div>
+              <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5">Warna Utama (Accent)</label>
+              <div class="flex items-center gap-3">
+                <input type="color" id="pltColor" value="#e11d48" class="w-12 h-10 rounded-lg border cursor-pointer" style="border-color:var(--border)" oninput="previewPlatform()">
+                <input type="text" id="pltColorHex" class="inp flex-1" placeholder="#e11d48" oninput="syncColorPicker()">
+              </div>
+              <p class="text-xs text-gray-400 mt-1">Warna tombol, badge, dan aksen aplikasi</p>
+            </div>
+
+            <button onclick="savePlatformSettings()" class="btn btn-primary w-full py-3"><i class="fas fa-save mr-1"></i> Simpan & Terapkan</button>
+            <button onclick="resetPlatformSettings()" class="btn btn-secondary w-full btn-sm">Reset ke Default</button>
+          </div>
+
+          <!-- Preview -->
+          <div class="space-y-4">
+            <!-- Preview login -->
+            <div class="card p-4">
+              <p class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-3">Preview Halaman Login</p>
+              <div class="rounded-2xl overflow-hidden border" style="border-color:var(--border)">
+                <div class="p-4 flex flex-col items-center text-center" id="pltPreviewLogin" style="background:#f7f8fc">
+                  <div class="w-14 h-14 rounded-xl overflow-hidden bg-gray-200 mb-2 flex items-center justify-center" id="pltPreviewLogoWrap">
+                    <i class="fas fa-paw text-gray-400 text-xl"></i>
+                  </div>
+                  <p class="font-black text-base" id="pltPreviewName" style="color:#e11d48">Cilegon Petshop</p>
+                  <p class="text-xs text-gray-400" id="pltPreviewTagline">Sistem POS Terpadu</p>
+                </div>
+                <div class="p-4 bg-white border-t" style="border-color:var(--border)">
+                  <p class="text-sm font-bold mb-2 text-gray-700">Silakan Login untuk Melanjutkan</p>
+                  <div class="h-8 rounded-lg mb-2" style="background:#f3f4f6"></div>
+                  <div class="h-8 rounded-lg mb-3" style="background:#f3f4f6"></div>
+                  <div class="h-9 rounded-xl" id="pltPreviewBtn" style="background:#e11d48"></div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Preview browser tab -->
+            <div class="card p-4">
+              <p class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-3">Preview Tab Browser</p>
+              <div class="flex items-center gap-2 p-2 rounded-xl" style="background:#f3f4f6;width:fit-content">
+                <div class="w-4 h-4 rounded overflow-hidden flex-shrink-0 bg-gray-300 flex items-center justify-center" id="pltPreviewFaviconTab">
+                  <i class="fas fa-globe text-gray-400" style="font-size:10px"></i>
+                </div>
+                <span class="text-xs font-medium text-gray-700" id="pltPreviewTitle">Cilegon Petshop — POS</span>
+                <div class="w-3 h-3 rounded-full bg-gray-300 ml-1"></div>
+              </div>
+            </div>
+
+            <!-- Preview struk header -->
+            <div class="card p-4">
+              <p class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-3">Preview Header Struk</p>
+              <div class="bg-white border rounded-xl p-3 text-center" style="font-family:'Roboto Condensed',monospace;font-size:12px;border-color:var(--border)">
+                <div class="flex justify-center mb-1" id="pltPreviewStruкLogo">
+                  <div class="w-8 h-8 bg-gray-100 rounded flex items-center justify-center text-gray-300"><i class="fas fa-image text-xs"></i></div>
+                </div>
+                <div class="font-black text-sm" id="pltPreviewStruкName">CILEGON PETSHOP</div>
+                <div class="text-gray-400 mt-1" style="font-size:9px">Struk Pembelian</div>
+                <div class="border-t border-dashed border-gray-200 mt-2"></div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -975,7 +1099,7 @@ window.onload=async()=>{
   const saved=sessionStorage.getItem('cp_user');
   if(saved){currentUser=JSON.parse(saved);await initApp();}
   else{document.getElementById('loginScreen').style.display='flex';}
-  loadReceiptSettings();loadLoyaltySettings();
+  loadReceiptSettings();loadLoyaltySettings();loadPlatformSettings();
   ['posDate','stkDate','expDate','sumStart','sumEnd','filterSaleS','filterSaleE','filterFinS','filterFinE','coDate'].forEach(id=>{const el=document.getElementById(id);if(el)el.value=getToday();});
   const now=new Date();const mEl=document.getElementById('dashMonth');
   if(mEl)mEl.value=`${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
@@ -1053,7 +1177,7 @@ function nav(id){
   document.querySelectorAll('.menu-item').forEach(e=>e.classList.remove('active'));
   const mi=document.getElementById('menu-'+id);if(mi)mi.classList.add('active');
   if(window.innerWidth<768)closeSidebar();
-  const titles={dashboard:'Dashboard',pos:'Transaksi Baru',salescrud:'Data Transaksi',stockin:'Tambah Stok',expense:'Pengeluaran',cashopname:'Cash Opname',stockopname:'Stock Opname',loyalty:'Program Loyalty',users:'Users & Akses',categories:'Kategori Produk',products:'Produk & Label',customers:'Data Pelanggan',sources:'Sumber Transaksi',loyaltysettings:'Setting Loyalty',printsettings:'Setting Struk (58mm)',laporanMenu:'Laporan Keuangan',ringkasanPenjualan:'Ringkasan Penjualan',repSales:'Histori Transaksi',repFinance:'Laporan Laba Rugi',vendorprice:'Harga Vendor',};
+  const titles={dashboard:'Dashboard',pos:'Transaksi Baru',salescrud:'Data Transaksi',stockin:'Tambah Stok',expense:'Pengeluaran',cashopname:'Cash Opname',stockopname:'Stock Opname',loyalty:'Program Loyalty',users:'Users & Akses',categories:'Kategori Produk',products:'Produk & Label',customers:'Data Pelanggan',sources:'Sumber Transaksi',loyaltysettings:'Setting Loyalty',printsettings:'Setting Struk (58mm)',laporanMenu:'Laporan Keuangan',ringkasanPenjualan:'Ringkasan Penjualan',repSales:'Histori Transaksi',repFinance:'Laporan Laba Rugi',vendorprice:'Harga Vendor',platformsettings:'Setting Platform',};
   document.getElementById('pageTitle').innerText=titles[id]||'Cilegon Petshop';
   if(id==='dashboard')loadDashboard();
   else if(id==='users')loadUsers();
@@ -1068,6 +1192,7 @@ function nav(id){
   else if(id==='cashopname')loadCashOpname();
   else if(id==='stockopname')loadStockOpname();
   else if(id==='vendorprice') loadVendorPrice();
+  else if(id==='platformsettings') loadPlatformSettingsView();
   else if(id==='repFinance')loadFinance();
   else if(id==='loyaltysettings')loadLoyaltySettingsView();
   else if(id==='pos'&&posRows===0)addPosRow();
@@ -1756,7 +1881,172 @@ function renderVendorTable(){
   });
   document.getElementById('vendorBody').innerHTML = rows;
 }
+// ===== PLATFORM SETTINGS =====
+let pltSet = {
+  appName: 'Cilegon Petshop',
+  title: 'Cilegon Petshop — POS',
+  tagline: 'Sistem POS Terpadu',
+  color: '#e11d48',
+  favicon: '',
+  logo: ''
+};
 
+function loadPlatformSettings(){
+  const s = localStorage.getItem('cp_platform');
+  if(s) pltSet = Object.assign(pltSet, JSON.parse(s));
+  applyPlatformSettings();
+}
+
+function applyPlatformSettings(){
+  // Title
+  document.title = pltSet.title || 'Cilegon Petshop — POS';
+
+  // Favicon
+  if(pltSet.favicon){
+    let link = document.querySelector("link[rel~='icon']");
+    if(!link){ link=document.createElement('link'); link.rel='icon'; document.head.appendChild(link); }
+    link.href = pltSet.favicon;
+  }
+
+  // CSS color variable
+  if(pltSet.color){
+    document.documentElement.style.setProperty('--p', pltSet.color);
+    document.documentElement.style.setProperty('--pd', darkenColor(pltSet.color, 20));
+  }
+
+  // App name di sidebar
+  const sbName = document.querySelector('.sb-logo-text p.font-bold');
+  if(sbName) sbName.innerText = pltSet.appName;
+
+  // Logo di sidebar
+  const sbImg = document.querySelector('#sidebar img');
+  if(sbImg && pltSet.logo) sbImg.src = pltSet.logo;
+
+  // Logo di login
+  const loginImg = document.querySelector('#loginScreen img');
+  if(loginImg && pltSet.logo) loginImg.src = pltSet.logo;
+
+  // App name di login
+  const loginName = document.querySelector('#loginScreen .font-black.text-base');
+  if(loginName) loginName.innerText = pltSet.appName;
+
+  // Tagline di login
+  const loginTag = document.querySelector('#loginScreen .text-xs.text-gray-400');
+  if(loginTag) loginTag.innerText = pltSet.tagline;
+
+  // Struk storeName otomatis sync jika belum pernah di-set manual
+  if(!rSet.storeName || rSet.storeName === 'CILEGON PETSHOP'){
+    rSet.storeName = pltSet.appName.toUpperCase();
+    if(document.getElementById('ps_store')) document.getElementById('ps_store').innerText = rSet.storeName;
+  }
+
+  // Struk logo sync
+  if(pltSet.logo && !rSet.logo){
+    rSet.logo = pltSet.logo;
+    if(document.getElementById('ps_logo')){ document.getElementById('ps_logo').src=pltSet.logo; document.getElementById('ps_logo_wrap').style.display='block'; }
+  }
+}
+
+function darkenColor(hex, amount){
+  hex = hex.replace('#','');
+  const num = parseInt(hex,16);
+  const r = Math.max(0, (num>>16)-amount);
+  const g = Math.max(0, ((num>>8)&0xff)-amount);
+  const b = Math.max(0, (num&0xff)-amount);
+  return '#'+[r,g,b].map(x=>x.toString(16).padStart(2,'0')).join('');
+}
+
+function loadPlatformSettingsView(){
+  document.getElementById('pltAppName').value = pltSet.appName;
+  document.getElementById('pltTitle').value = pltSet.title;
+  document.getElementById('pltTagline').value = pltSet.tagline;
+  document.getElementById('pltColor').value = pltSet.color;
+  document.getElementById('pltColorHex').value = pltSet.color;
+  // Logo preview
+  if(pltSet.logo){
+    document.getElementById('pltLogoPreview').innerHTML = `<img src="${pltSet.logo}" class="w-full h-full object-contain p-1">`;
+    document.getElementById('pltPreviewLogoWrap').innerHTML = `<img src="${pltSet.logo}" class="w-full h-full object-contain">`;
+    document.getElementById('pltPreviewStruкLogo').innerHTML = `<img src="${pltSet.logo}" style="height:24px;object-contain">`;
+  }
+  // Favicon preview
+  if(pltSet.favicon){
+    document.getElementById('pltFaviconPreview').innerHTML = `<img src="${pltSet.favicon}" class="w-full h-full object-contain p-1">`;
+    document.getElementById('pltPreviewFaviconTab').innerHTML = `<img src="${pltSet.favicon}" style="width:14px;height:14px;object-fit:contain">`;
+  }
+  previewPlatform();
+}
+
+function previewPlatform(){
+  const name = document.getElementById('pltAppName').value || 'Nama Aplikasi';
+  const title = document.getElementById('pltTitle').value || 'Nama Aplikasi — POS';
+  const tagline = document.getElementById('pltTagline').value || 'Deskripsi Singkat';
+  const color = document.getElementById('pltColor').value || '#e11d48';
+
+  document.getElementById('pltPreviewName').innerText = name;
+  document.getElementById('pltPreviewName').style.color = color;
+  document.getElementById('pltPreviewTagline').innerText = tagline;
+  document.getElementById('pltPreviewTitle').innerText = title;
+  document.getElementById('pltPreviewBtn').style.background = color;
+  document.getElementById('pltPreviewStruкName').innerText = name.toUpperCase();
+  document.getElementById('pltColorHex').value = color;
+}
+
+function syncColorPicker(){
+  const hex = document.getElementById('pltColorHex').value;
+  if(/^#[0-9a-fA-F]{6}$/.test(hex)){
+    document.getElementById('pltColor').value = hex;
+    previewPlatform();
+  }
+}
+
+function onFaviconUpload(e){
+  const f=e.target.files[0]; if(!f) return;
+  const r=new FileReader(); r.onload=x=>{
+    pltSet.favicon=x.target.result;
+    document.getElementById('pltFaviconPreview').innerHTML=`<img src="${pltSet.favicon}" class="w-full h-full object-contain p-1">`;
+    document.getElementById('pltPreviewFaviconTab').innerHTML=`<img src="${pltSet.favicon}" style="width:14px;height:14px;object-fit:contain">`;
+  }; r.readAsDataURL(f);
+}
+
+function onLogoMainUpload(e){
+  const f=e.target.files[0]; if(!f) return;
+  const r=new FileReader(); r.onload=x=>{
+    pltSet.logo=x.target.result;
+    document.getElementById('pltLogoPreview').innerHTML=`<img src="${pltSet.logo}" class="w-full h-full object-contain p-1">`;
+    document.getElementById('pltPreviewLogoWrap').innerHTML=`<img src="${pltSet.logo}" class="w-full h-full object-contain">`;
+    document.getElementById('pltPreviewStruкLogo').innerHTML=`<img src="${pltSet.logo}" style="height:24px;object-contain">`;
+  }; r.readAsDataURL(f);
+}
+
+function clearMainLogo(){
+  pltSet.logo='';
+  document.getElementById('pltLogoPreview').innerHTML='<i class="fas fa-image text-gray-300 text-xl"></i>';
+  document.getElementById('pltPreviewLogoWrap').innerHTML='<i class="fas fa-paw text-gray-400 text-xl"></i>';
+  document.getElementById('pltPreviewStruкLogo').innerHTML='<div class="w-8 h-8 bg-gray-100 rounded flex items-center justify-center text-gray-300"><i class="fas fa-image text-xs"></i></div>';
+}
+
+function savePlatformSettings(){
+  pltSet.appName = document.getElementById('pltAppName').value || 'Cilegon Petshop';
+  pltSet.title = document.getElementById('pltTitle').value || 'Cilegon Petshop — POS';
+  pltSet.tagline = document.getElementById('pltTagline').value || 'Sistem POS Terpadu';
+  pltSet.color = document.getElementById('pltColor').value || '#e11d48';
+  localStorage.setItem('cp_platform', JSON.stringify(pltSet));
+  // Sync ke struk
+  rSet.storeName = pltSet.appName.toUpperCase();
+  if(pltSet.logo) rSet.logo = pltSet.logo;
+  localStorage.setItem('cp_receipt', JSON.stringify(rSet));
+  applyPlatformSettings();
+  toast('Setting platform diterapkan ✓');
+}
+
+function resetPlatformSettings(){
+  if(!confirm('Reset semua setting platform ke default?')) return;
+  localStorage.removeItem('cp_platform');
+  pltSet = {appName:'Cilegon Petshop',title:'Cilegon Petshop — POS',tagline:'Sistem POS Terpadu',color:'#e11d48',favicon:'',logo:''};
+  loadPlatformSettingsView();
+  applyPlatformSettings();
+  toast('Setting direset ke default');
+}
 // ===== GENERIC DELETE =====
 async function deleteData(tbl,id,cb){if(!confirm('Hapus permanen? Data tidak bisa dipulihkan.'))return;showLoad();const{error}=await db.from(tbl).delete().eq('id',id);hideLoad();if(error)return toast(error.message,false);toast('Data terhapus');logAct('Hapus',`Hapus dari ${tbl}`);if(typeof cb==='function')cb();}
 </script>
