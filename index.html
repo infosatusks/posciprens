@@ -1934,7 +1934,7 @@ async function processSale(){
 function resetPos(){document.getElementById('posTableBody').innerHTML='';posRows=0;document.getElementById('posBuyer').value='';document.getElementById('posDiscount').value='0';document.getElementById('custInfoCard').classList.add('hidden');calculatePos();addPosRow();}
 
 // ===== RECEIPT =====
-function loadReceiptSettings(){
+async function loadReceiptSettings(){
   const s=localStorage.getItem('cp_receipt');if(s)rSet=Object.assign(rSet,JSON.parse(s));
   const set=(id,val)=>{const el=document.getElementById(id);if(el)el.value=val;};const chk=(id,val)=>{const el=document.getElementById(id);if(el)el.checked=val;};
   set('setStoreName',rSet.storeName);set('setStoreAddr',rSet.storeAddr);set('txtFooter',rSet.txt);chk('setNo',rSet.no);chk('setKasir',rSet.kasir);chk('setFooter',rSet.footer);
