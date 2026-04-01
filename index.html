@@ -645,14 +645,36 @@ input:checked+.slider:before{transform:translateX(18px)}
           <!-- Panel kiri: tools -->
           <div class="card p-5 space-y-4 lg:col-span-1">
             <h3 class="font-bold text-base">Panel Desain</h3>
-            <!-- Upload BG -->
+        <!-- Upload BG Depan -->
             <div>
-              <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Background Kartu</label>
-              <div class="border-2 border-dashed rounded-xl p-4 text-center" style="border-color:var(--border)" id="cdBgDropzone">
-                <i class="fas fa-image text-gray-300 text-2xl mb-2"></i>
-                <p class="text-xs text-gray-400">Upload gambar background (856×540px)</p>
-                <input type="file" id="cdBgFile" accept="image/*" class="hidden" onchange="onCardBgUpload(event)">
-                <button onclick="document.getElementById('cdBgFile').click()" class="btn btn-secondary btn-sm mt-2"><i class="fas fa-upload"></i> Pilih Gambar</button>
+              <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Background Depan</label>
+              <div class="border-2 border-dashed rounded-xl p-3 text-center" style="border-color:var(--border)">
+                <div id="cdBgFrontThumb" class="hidden mb-2 rounded-lg overflow-hidden mx-auto" style="height:48px;width:80px;background:#f3f4f6">
+                  <img id="cdBgFrontImg" class="w-full h-full object-cover">
+                </div>
+                <i id="cdBgFrontIcon" class="fas fa-image text-gray-300 text-xl mb-1"></i>
+                <p class="text-xs text-gray-400 mb-1">856×540px — depan kartu</p>
+                <input type="file" id="cdBgFile" accept="image/*" class="hidden" onchange="onCardBgUpload(event,'front')">
+                <div class="flex gap-1 justify-center">
+                  <button onclick="document.getElementById('cdBgFile').click()" class="btn btn-secondary btn-sm"><i class="fas fa-upload"></i> Upload</button>
+                  <button onclick="clearCardBg('front')" class="btn btn-xs btn-danger">Hapus</button>
+                </div>
+              </div>
+            </div>
+            <!-- Upload BG Belakang -->
+            <div>
+              <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Background Belakang</label>
+              <div class="border-2 border-dashed rounded-xl p-3 text-center" style="border-color:var(--border)">
+                <div id="cdBgBackThumb" class="hidden mb-2 rounded-lg overflow-hidden mx-auto" style="height:48px;width:80px;background:#f3f4f6">
+                  <img id="cdBgBackImg" class="w-full h-full object-cover">
+                </div>
+                <i id="cdBgBackIcon" class="fas fa-image text-gray-300 text-xl mb-1"></i>
+                <p class="text-xs text-gray-400 mb-1">856×540px — belakang kartu</p>
+                <input type="file" id="cdBgBackFile" accept="image/*" class="hidden" onchange="onCardBgUpload(event,'back')">
+                <div class="flex gap-1 justify-center">
+                  <button onclick="document.getElementById('cdBgBackFile').click()" class="btn btn-secondary btn-sm"><i class="fas fa-upload"></i> Upload</button>
+                  <button onclick="clearCardBg('back')" class="btn btn-xs btn-danger">Hapus</button>
+                </div>
               </div>
             </div>
             <!-- Elemen teks -->
@@ -692,6 +714,28 @@ input:checked+.slider:before{transform:translateX(18px)}
               <div id="cdElements"></div>
             </div>
             <!-- Preview dengan data nyata -->
+            <!-- Preview belakang kartu -->
+            <div class="mt-4">
+              <p class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Preview Belakang</p>
+              <div class="relative rounded-xl overflow-hidden mx-auto" style="width:100%;max-width:428px;aspect-ratio:856/540;background:#f3f4f6">
+                <img id="cdBackPreviewBg" src="" class="absolute inset-0 w-full h-full object-cover" style="display:none">
+                <div id="cdBackPreviewDefault" class="absolute inset-0 flex items-center justify-center text-gray-300 text-xs">
+                  <div class="text-center"><i class="fas fa-image text-2xl mb-1"></i><p>Upload background belakang</p></div>
+                </div>
+                <!-- QR placeholder -->
+                <div class="absolute inset-0 flex items-center justify-between px-8">
+                  <div class="flex flex-col items-center gap-1">
+                    <div class="bg-white p-2 rounded-lg" style="box-shadow:0 2px 8px rgba(0,0,0,.15)">
+                      <div style="width:60px;height:60px;background:repeating-linear-gradient(0deg,#000 0,#000 4px,#fff 4px,#fff 8px),repeating-linear-gradient(90deg,#000 0,#000 4px,#fff 4px,#fff 8px);background-blend-mode:difference;opacity:.8"></div>
+                    </div>
+                    <p class="text-xs font-mono font-bold" style="color:#cc0e74;font-size:8px" id="cdBackCode">CPS-00000001</p>
+                  </div>
+                  <div class="flex flex-col items-center gap-2">
+                    <img src="logo.png" style="width:40px;height:40px;object-fit:contain" onerror="this.src='logo.jpg'">
+                  </div>
+                </div>
+              </div>
+            </div>
             <div class="mt-4 p-3 rounded-xl" style="background:#f9fafb;border:1px solid var(--border)">
               <p class="text-xs font-bold text-gray-400 mb-2 uppercase tracking-wider">Isi Contoh (menggunakan data member pertama)</p>
               <div class="flex gap-3 flex-wrap text-xs text-gray-500">
@@ -1633,7 +1677,7 @@ body{font-family:'Roboto',sans-serif;background:#f7f0f4;display:flex;justify-con
 </div>
 <div class="card-wrap">
   <div class="card-label">Belakang</div>
-  <div class="card card-back">
+  ${cdDesign.bgBack?'':'<div class="doodle-pattern"></div>'}
     <div style="display:flex;flex-direction:column;align-items:center;gap:2mm">
       <div id="qrcode" style="background:#fff;padding:2mm;border-radius:2mm;box-shadow:0 2px 8px rgba(0,0,0,.1)"></div>
       <div style="font-family:'Roboto Mono',monospace;font-size:7px;font-weight:700;color:#cc0e74;letter-spacing:1.5px">${c.unique_code||'—'}</div>
@@ -1706,7 +1750,7 @@ body{font-family:'Roboto',sans-serif;background:#f7f0f4;display:flex;justify-con
 <div class="card-wrap">
   <div class="card-label">Depan</div>
   <div class="card card-front">
-    <div class="doodle-pattern"></div>
+    ${cdDesign.bgBack?'':'${cdDesign.bgBack?'':'<div class="doodle-pattern"></div>'}'}
 
     <!-- Kiri: pink block -->
    <div class="front-pink-block">
@@ -1747,17 +1791,16 @@ body{font-family:'Roboto',sans-serif;background:#f7f0f4;display:flex;justify-con
 <!-- BELAKANG -->
 <div class="card-wrap">
   <div class="card-label">Belakang</div>
-  <div class="card card-back">
-    <div class="doodle-pattern"></div>
-    <div class="back-inner">
-      <!-- QR Code -->
+  <div class="card" style="position:relative;overflow:hidden;${cdDesign.bgBack?`background:url('${cdDesign.bgBack}') center/cover no-repeat`:'background:#fff'}">
+    ${cdDesign.bgBack?'':'${cdDesign.bgBack?'':'<div class="doodle-pattern"></div>'}'}
+    ${cdDesign.bgBack?`<div style="position:absolute;inset:0;background:rgba(0,0,0,.25);z-index:0"></div>`:''}
+    <div style="position:relative;z-index:1;width:100%;height:100%;display:flex;align-items:center;justify-content:space-between;padding:5mm 7mm">
       <div style="display:flex;flex-direction:column;align-items:center;gap:2mm">
-        <div id="qrcode" style="background:#fff;padding:2mm;border-radius:2mm;box-shadow:0 2px 8px rgba(0,0,0,.1)"></div>
-        <div style="font-family:'Roboto Mono',monospace;font-size:7px;font-weight:700;color:#cc0e74;letter-spacing:1.5px">${c.unique_code||'—'}</div>
+        <div id="qrcode" style="background:#fff;padding:2mm;border-radius:2mm;box-shadow:0 2px 8px rgba(0,0,0,.2)"></div>
+        <div style="font-family:'Roboto Mono',monospace;font-size:7px;font-weight:700;color:${cdDesign.bgBack?'#fff':'#cc0e74'};letter-spacing:1.5px">${c.unique_code||'—'}</div>
       </div>
-      <!-- Logo saja, sejajar QR -->
       <div style="display:flex;align-items:center;justify-content:center">
-        <img src="${logoSrc}" style="height:22mm;width:22mm;object-fit:contain" onerror="this.style.display='none'">
+        <img src="${logoSrc}" style="height:22mm;width:22mm;object-fit:contain;filter:${cdDesign.bgBack?'drop-shadow(0 2px 4px rgba(0,0,0,.4))':'none'}" onerror="this.style.display='none'">
       </div>
     </div>
   </div>
@@ -2632,7 +2675,7 @@ async function saveTarget(){
 // ============================================================
 // ===== CARD DESIGNER =====
 // ============================================================
-let cdDesign = {bg:'', elements:[
+let cdDesign = {bg:'', bgBack:'', elements:[
   {id:'name',  label:'Nama Member', x:52,y:42,size:16,color:'#111827',bold:true, active:true},
   {id:'code',  label:'Kode Member', x:52,y:60,size:12,color:'#cc0e74',bold:true, active:true},
   {id:'phone', label:'No HP',       x:52,y:74,size:11,color:'#6b7280',bold:false,active:true},
@@ -2651,6 +2694,17 @@ async function loadCardDesigner(){
     document.getElementById('cdBgImg').style.display='block';
     document.getElementById('cdBgDefault').style.display='none';
   }
+  if(cdDesign.bgBack){
+    document.getElementById('cdBgBackImg').src=cdDesign.bgBack;
+    document.getElementById('cdBgBackThumb').classList.remove('hidden');
+    document.getElementById('cdBgBackIcon').classList.add('hidden');
+    const prevBack=document.getElementById('cdBackPreviewBg');
+    if(prevBack){ prevBack.src=cdDesign.bgBack; prevBack.style.display='block'; }
+    document.getElementById('cdBackPreviewDefault').style.display='none';
+  }
+  if(allCustomers.length>0){
+    document.getElementById('cdBackCode').innerText=allCustomers[0].unique_code||'CPS-00000001';
+  }
   // Update sample data dengan pelanggan pertama jika ada
   if(allCustomers.length>0){
     const c=allCustomers[0];
@@ -2667,14 +2721,49 @@ async function loadCardDesigner(){
   renderCdElementList();
 }
 
-function onCardBgUpload(e){
+function onCardBgUpload(e, side='front'){
   const f=e.target.files[0]; if(!f) return;
-  const r=new FileReader(); r.onload=x=>{
-    cdDesign.bg=x.target.result;
-    document.getElementById('cdBgImg').src=cdDesign.bg;
-    document.getElementById('cdBgImg').style.display='block';
-    document.getElementById('cdBgDefault').style.display='none';
-  }; r.readAsDataURL(f);
+  const r=new FileReader();
+  r.onload=x=>{
+    const data=x.target.result;
+    if(side==='front'){
+      cdDesign.bg=data;
+      // Update canvas preview depan
+      document.getElementById('cdBgImg').src=data;
+      document.getElementById('cdBgImg').style.display='block';
+      document.getElementById('cdBgDefault').style.display='none';
+      // Update thumb
+      document.getElementById('cdBgFrontImg').src=data;
+      document.getElementById('cdBgFrontThumb').classList.remove('hidden');
+      document.getElementById('cdBgFrontIcon').classList.add('hidden');
+    } else {
+      cdDesign.bgBack=data;
+      // Update thumb belakang
+      document.getElementById('cdBgBackImg').src=data;
+      document.getElementById('cdBgBackThumb').classList.remove('hidden');
+      document.getElementById('cdBgBackIcon').classList.add('hidden');
+      // Update preview belakang
+      const prevBack=document.getElementById('cdBackPreviewBg');
+      if(prevBack) prevBack.src=data;
+    }
+  };
+  r.readAsDataURL(f);
+}
+
+function clearCardBg(side){
+  if(side==='front'){
+    cdDesign.bg='';
+    document.getElementById('cdBgImg').style.display='none';
+    document.getElementById('cdBgDefault').style.display='flex';
+    document.getElementById('cdBgFrontThumb').classList.add('hidden');
+    document.getElementById('cdBgFrontIcon').classList.remove('hidden');
+  } else {
+    cdDesign.bgBack='';
+    document.getElementById('cdBgBackThumb').classList.add('hidden');
+    document.getElementById('cdBgBackIcon').classList.remove('hidden');
+    const prevBack=document.getElementById('cdBackPreviewBg');
+    if(prevBack) prevBack.src='';
+  }
 }
 
 function renderCdElements(){
