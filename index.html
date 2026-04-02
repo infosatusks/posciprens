@@ -811,8 +811,9 @@ input:checked+.slider:before{transform:translateX(18px)}
             </div>
             <!-- Card canvas wrapper -->
             <div class="relative mx-auto rounded-xl overflow-hidden select-none" id="cdCanvas"
-              style="width:100%;max-width:428px;aspect-ratio:856/540;background:#f3f4f6;cursor:default"
-              onmousemove="onCanvasDrag(event)" onmouseup="stopDrag()" onmouseleave="stopDrag()">
+              style="width:100%;max-width:100%;aspect-ratio:856/540;background:#f3f4f6;cursor:default;touch-action:none"
+              onmousemove="onCanvasDrag(event)" onmouseup="stopDrag()" onmouseleave="stopDrag()"
+              ontouchmove="onCanvasTouchDrag(event)" ontouchend="stopDrag()">
               <!-- BG image -->
               <img id="cdBgImg" src="" alt="" class="absolute inset-0 w-full h-full object-cover" style="display:none">
               <!-- Default bg jika belum upload -->
@@ -826,7 +827,7 @@ input:checked+.slider:before{transform:translateX(18px)}
             <!-- Preview belakang kartu -->
             <div class="mt-4">
               <p class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Preview Belakang</p>
-              <div class="relative rounded-xl overflow-hidden mx-auto" style="width:100%;max-width:428px;aspect-ratio:856/540;background:#f3f4f6">
+              <div class="relative rounded-xl overflow-hidden mx-auto" style="width:100%;max-width:100%;aspect-ratio:856/540;background:#f3f4f6">
                 <img id="cdBackPreviewBg" src="" class="absolute inset-0 w-full h-full object-cover" style="display:none">
                 <div id="cdBackPreviewDefault" class="absolute inset-0 flex items-center justify-center text-gray-300 text-xs">
                   <div class="text-center"><i class="fas fa-image text-2xl mb-1"></i><p>Upload background belakang</p></div>
@@ -1073,6 +1074,15 @@ input:checked+.slider:before{transform:translateX(18px)}
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
           <div class="card p-6 space-y-5">
             <div><h3 class="font-bold text-base mb-1">Konfigurasi Program Loyalty</h3><p class="text-sm text-gray-500">Atur poin dan masa berlaku kartu member</p></div>
+            <!-- Prefix kode member -->
+            <div>
+              <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Prefix Kode Member</label>
+              <div class="flex items-center gap-2">
+                <input type="text" id="lsMemberPrefix" class="inp font-mono font-bold text-lg" placeholder="MBR" maxlength="5" style="text-transform:uppercase;width:120px">
+                <span class="text-gray-400 text-sm">- 00000001</span>
+              </div>
+              <p class="text-xs text-gray-400 mt-1">Contoh: MBR → MBR-00000001 | PET → PET-00000001</p>
+            </div>
             <div><label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Nilai Belanja per 1 Poin (Rp)</label><input type="number" id="lsPerRp" class="inp font-bold text-lg" placeholder="10000" min="1000" step="1000"><p class="text-xs text-gray-400 mt-1">Contoh: 10000 → Rp 10.000 belanja = 1 poin</p></div>
             <div><label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Bonus Poin Pendaftaran Member Baru</label><input type="number" id="lsBonusNew" class="inp" placeholder="0" min="0"></div>
             <div><label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Minimum Belanja untuk Dapat Poin (Rp)</label><input type="number" id="lsMinBuy" class="inp" placeholder="0" min="0"></div>
@@ -1098,33 +1108,38 @@ input:checked+.slider:before{transform:translateX(18px)}
           </div>
           <div class="card p-6">
             <h3 class="font-bold text-sm mb-4">Preview Kartu Member</h3>
-            <!-- Preview kartu sesuai desain asli: split pink-putih -->
-            <div class="mb-5 rounded-2xl overflow-hidden" style="box-shadow:0 8px 24px rgba(204,14,116,.2);height:120px;display:flex">
-              <!-- Kiri: pink + doodle -->
-              <div class="relative flex-shrink-0 flex flex-col justify-between p-3" style="width:38%;background:linear-gradient(160deg,#cc0e74,#e8559a);overflow:hidden">
-                <div style="position:absolute;inset:0;background-image:url('doodle.jpg');background-size:cover;opacity:.15;mix-blend-mode:luminosity"></div>
-                <div class="relative z-10 flex flex-col gap-1">
-                  <img src="logo.png" class="w-8 h-8 object-contain rounded-lg" style="background:#fff;padding:1px" onerror="this.src='logo.jpg'">
-                  <div class="font-black text-white leading-tight" style="font-size:9px">Cilegon<br>Petshop</div>
-                  <div class="font-bold text-white/80 uppercase tracking-widest" style="font-size:6px">Loyalty Card</div>
+            <!-- Preview kartu — sinkron dengan Card Designer -->
+            <div class="mb-5 rounded-2xl overflow-hidden relative select-none" id="loyaltyCardPreview"
+              style="height:120px;background:#f3f4f6;box-shadow:0 8px 24px rgba(204,14,116,.2)">
+              <img id="loyaltyPreviewBg" src="" alt="" class="absolute inset-0 w-full h-full object-cover" style="display:none">
+              <!-- Fallback: split pink/putih jika belum ada bg custom -->
+              <div id="loyaltyPreviewDefault" style="display:flex;height:100%">
+                <div class="relative flex-shrink-0 flex flex-col justify-between p-3" style="width:38%;background:linear-gradient(160deg,#cc0e74,#e8559a);overflow:hidden">
+                  <div style="position:absolute;inset:0;background-image:url('doodle.jpg');background-size:cover;opacity:.15;mix-blend-mode:luminosity"></div>
+                  <div class="relative z-10 flex flex-col gap-1">
+                    <img src="logo.png" class="w-8 h-8 object-contain rounded-lg" style="background:#fff;padding:1px" onerror="this.src='logo.jpg'">
+                    <div class="font-black text-white leading-tight" style="font-size:9px">Cilegon<br>Petshop</div>
+                    <div class="font-bold text-white/80 uppercase tracking-widest" style="font-size:6px">Loyalty Card</div>
+                  </div>
+                  <div class="relative z-10">
+                    <div class="font-bold text-white/70 uppercase" style="font-size:6px">Member Sejak</div>
+                    <div class="font-black text-white" style="font-size:8px">01 Jan 2025</div>
+                  </div>
                 </div>
-                <div class="relative z-10">
-                  <div class="font-bold text-white/70 uppercase" style="font-size:6px">Member Sejak</div>
-                  <div class="font-black text-white" style="font-size:8px">01 Jan 2025</div>
+                <div class="flex-1 bg-white flex flex-col justify-between p-3">
+                  <div></div>
+                  <div>
+                    <div class="font-black text-gray-900 uppercase" style="font-size:13px">NAMA MEMBER</div>
+                    <div class="font-bold tracking-widest" style="font-size:9px;color:#cc0e74;font-family:monospace">MBR-00000001</div>
+                  </div>
+                  <div style="border-top:1px solid #f5e0ec;padding-top:4px">
+                    <div class="font-bold text-gray-400 uppercase" style="font-size:6px">No HP</div>
+                    <div class="font-bold text-gray-700" style="font-size:8px">08xx-xxxx-xxxx</div>
+                  </div>
                 </div>
               </div>
-              <!-- Kanan: putih -->
-              <div class="flex-1 bg-white flex flex-col justify-between p-3">
-                <div></div>
-                <div>
-                  <div class="font-black text-gray-900 uppercase" style="font-size:13px">NAMA MEMBER</div>
-                  <div class="font-bold tracking-widest" style="font-size:9px;color:#cc0e74;font-family:monospace">CPS-00000001</div>
-                </div>
-                <div style="border-top:1px solid #f5e0ec;padding-top:4px">
-                  <div class="font-bold text-gray-400 uppercase" style="font-size:6px">No HP</div>
-                  <div class="font-bold text-gray-700" style="font-size:8px">08xxxxxxxxxx</div>
-                </div>
-              </div>
+              <!-- Elemen teks custom dari card designer -->
+              <div id="loyaltyPreviewElements" class="absolute inset-0" style="display:none"></div>
             </div>
             <div class="p-4 rounded-xl text-sm" style="background:#f9fafb;border:1px solid var(--border)"><p class="font-bold mb-1">Aturan Saat Ini:</p><p class="text-gray-600 leading-relaxed" id="loyaltySummary">—</p></div>
           </div>
@@ -1415,7 +1430,7 @@ let currentUser=null,allProducts=[],allCategories=[],allCustomers=[],allSourcesT
 let posRows=0,html5Qrcode=null,scanTarget='';
 let charts={main:null};
 let rSet={storeName:'CILEGON PETSHOP',storeAddr:'',logo:'',no:true,kasir:true,footer:true,txt:'Terima kasih sudah berbelanja!'};
-let lSet={active:true,perRp:10000,bonusNew:0,minBuy:0,expiryType:'yearend',expiryMonths:12};
+let lSet = {active:true,perRp:10000,bonusNew:0,minBuy:0,expiryType:'yearend',expiryMonths:12,memberPrefix:'MBR'};
 let currentRange={start:getToday(),end:getToday()};
 
 // ===== UTILS =====
@@ -1690,7 +1705,16 @@ function openCustomerModal(id='', asLoyalty=false){
   }
   openModal('modalCustomer');
 }
-async function generateNextCode(){const{data:last}=await db.from('customers').select('unique_code').order('created_at',{ascending:false}).limit(1);let num=1;if(last&&last.length>0&&last[0].unique_code){const n=parseInt(last[0].unique_code.replace('CPS-',''));if(!isNaN(n))num=n+1;}return'CPS-'+String(num).padStart(8,'0');}
+async function generateNextCode(){
+  const prefix = lSet.memberPrefix||'MBR';
+  const{data:last}=await db.from('customers').select('unique_code').order('created_at',{ascending:false}).limit(1);
+  let num=1;
+  if(last&&last.length>0&&last[0].unique_code){
+    const n=parseInt(last[0].unique_code.replace(/^[A-Z]+-/,''));
+    if(!isNaN(n)) num=n+1;
+  }
+  return prefix+'-'+String(num).padStart(8,'0');
+}
 async function saveCustomer(e){
   e.preventDefault();
   showLoad();
@@ -1944,6 +1968,7 @@ async function loadLoyaltySettings(){
       const k=row.key.replace('loyalty_','');
       if(k==='active') lSet[k]=row.value==='true';
       else if(k==='perRp'||k==='bonusNew'||k==='minBuy'||k==='expiryMonths') lSet[k]=parseInt(row.value)||0;
+      else if(k==='memberPrefix') lSet[k]=(row.value||'MBR').toUpperCase();
       else if(k in lSet) lSet[k]=row.value;
     });
   }
@@ -1958,7 +1983,9 @@ function toggleExpiryType(){
 }
 function loadLoyaltySettingsView(){
   document.getElementById('lsPerRp').value=lSet.perRp;document.getElementById('lsBonusNew').value=lSet.bonusNew;document.getElementById('lsMinBuy').value=lSet.minBuy;document.getElementById('lsActive').checked=lSet.active;document.getElementById('lsExpiryType').value=lSet.expiryType||'yearend';document.getElementById('lsExpiryMonths').value=lSet.expiryMonths||12;
+  document.getElementById('lsMemberPrefix').value=lSet.memberPrefix||'MBR';
   toggleExpiryType();updateLoyaltySummary();
+  syncLoyaltyCardPreview();
 }
 async function saveLoyaltySettings(){
   lSet.perRp=parseInt(document.getElementById('lsPerRp').value)||10000;
@@ -1967,14 +1994,16 @@ async function saveLoyaltySettings(){
   lSet.active=document.getElementById('lsActive').checked;
   lSet.expiryType=document.getElementById('lsExpiryType').value;
   lSet.expiryMonths=parseInt(document.getElementById('lsExpiryMonths').value)||12;
+  lSet.memberPrefix=(document.getElementById('lsMemberPrefix').value||'MBR').toUpperCase().replace(/[^A-Z0-9]/g,'');
   showLoad();
   for(const [key,value] of Object.entries(lSet)){
     await db.from('app_settings').upsert({key:'loyalty_'+key,value:String(value),updated_at:new Date().toISOString()},{onConflict:'key'});
   }
   hideLoad();
+  logAct('Setting','Loyalty diperbarui');
   toast('Setting loyalty disimpan ke database ✓');
-  updateLoyaltySummary();
 }
+  
 function updateLoyaltySummary(){
   const el=document.getElementById('loyaltySummary');if(!el)return;
   const expTxt=lSet.expiryType==='yearend'?'Berlaku s/d 31 Des tiap tahun':lSet.expiryType==='months'?`Berlaku ${lSet.expiryMonths} bulan sejak daftar`:'Tanpa masa berlaku';
@@ -2109,8 +2138,13 @@ function saveReceiptSettings(){
   rSet.kasir=document.getElementById('setKasir')?.checked??true;
   rSet.footer=document.getElementById('setFooter')?.checked??true;
   rSet.txt=document.getElementById('txtFooter')?.value||'';
+  // Ambil font size & ukuran struk dari slider
+  rcpSet.fontSize=parseInt(document.getElementById('rcpFontSize')?.value)||12;
+  applyReceiptSizeSettings();
   updateReceiptPreview();
   saveReceiptSettingsToDB();
+  saveReceiptSizeSettings();
+  logAct('Setting','Struk diperbarui');
   toast('Setting struk disimpan');
 }
 
@@ -2444,8 +2478,8 @@ async function savePlatformSettings(){
   if(pltSet.logo) rSet.logo = pltSet.logo;
   await saveReceiptSettingsToDB();
   hideLoad();
+  logAct('Setting','Platform diperbarui');
   applyPlatformSettings();
-  toast('Setting platform disimpan ke database ✓');
 }
 
 async function resetPlatformSettings(){
@@ -2810,14 +2844,60 @@ async function loadCardDesigner(){
     document.getElementById('cdBgImg').style.display='block';
     document.getElementById('cdBgDefault').style.display='none';
   }
-  if(cdDesign.bgBack){
-    document.getElementById('cdBgBackImg').src=cdDesign.bgBack;
-    document.getElementById('cdBgBackThumb').classList.remove('hidden');
-    document.getElementById('cdBgBackIcon').classList.add('hidden');
-    const prevBack=document.getElementById('cdBackPreviewBg');
-    if(prevBack){ prevBack.src=cdDesign.bgBack; prevBack.style.display='block'; }
-    document.getElementById('cdBackPreviewDefault').style.display='none';
+  async function loadCardDesigner(){
+  const {data}=await db.from('app_settings').select('value').eq('key','card_designer').single();
+  if(data&&data.value){ try{ cdDesign=JSON.parse(data.value); }catch(e){} }
+
+  // Load bg depan
+  const bgImg=document.getElementById('cdBgImg');
+  const bgDefault=document.getElementById('cdBgDefault');
+  const frontThumb=document.getElementById('cdBgFrontThumb');
+  const frontIcon=document.getElementById('cdBgFrontIcon');
+  if(cdDesign.bg){
+    bgImg.src=cdDesign.bg; bgImg.style.display='block';
+    bgDefault.style.display='none';
+    document.getElementById('cdBgFrontImg').src=cdDesign.bg;
+    frontThumb.classList.remove('hidden'); frontIcon.classList.add('hidden');
+  } else {
+    bgImg.style.display='none'; bgDefault.style.display='flex';
+    frontThumb.classList.add('hidden'); frontIcon.classList.remove('hidden');
   }
+
+  // Load bg belakang
+  const prevBack=document.getElementById('cdBackPreviewBg');
+  const backDefault=document.getElementById('cdBackPreviewDefault');
+  const backThumb=document.getElementById('cdBgBackThumb');
+  const backIcon=document.getElementById('cdBgBackIcon');
+  if(cdDesign.bgBack){
+    if(prevBack){ prevBack.src=cdDesign.bgBack; prevBack.style.display='block'; }
+    if(backDefault) backDefault.style.display='none';
+    document.getElementById('cdBgBackImg').src=cdDesign.bgBack;
+    backThumb.classList.remove('hidden'); backIcon.classList.add('hidden');
+  } else {
+    if(prevBack) prevBack.style.display='none';
+    if(backDefault) backDefault.style.display='flex';
+    backThumb.classList.add('hidden'); backIcon.classList.remove('hidden');
+  }
+
+  // Sample data dari pelanggan pertama
+  if(allCustomers.length>0){
+    const c=allCustomers[0];
+    CD_SAMPLE.name=(c.name||'').toUpperCase();
+    CD_SAMPLE.code=c.unique_code||'MBR-00000001';
+    CD_SAMPLE.phone=c.phone||'—';
+    CD_SAMPLE.points=`${c.points||0} Poin`;
+    const el=document.getElementById('cdSampleName'); if(el) el.innerText=CD_SAMPLE.name;
+    const el2=document.getElementById('cdSampleCode'); if(el2) el2.innerText=CD_SAMPLE.code;
+    const el3=document.getElementById('cdSamplePhone'); if(el3) el3.innerText=CD_SAMPLE.phone;
+    const el4=document.getElementById('cdSamplePoints'); if(el4) el4.innerText=CD_SAMPLE.points;
+    const bc=document.getElementById('cdBackCode'); if(bc) bc.innerText=CD_SAMPLE.code;
+  }
+
+  cdSelectedId=null;
+  document.getElementById('cdEditPanel').classList.add('hidden');
+  renderCdElements();
+  renderCdElementList();
+}
   if(allCustomers.length>0){
     document.getElementById('cdBackCode').innerText=allCustomers[0].unique_code||'CPS-00000001';
   }
@@ -2893,6 +2973,7 @@ function renderCdElements(){
     div.style.cssText=`position:absolute;left:${el.x}%;top:${el.y}%;transform:translate(-50%,-50%);font-size:${el.size}px;color:${el.color};font-weight:${el.bold?'900':'400'};cursor:grab;user-select:none;padding:2px 4px;border-radius:4px;border:1px dashed transparent;white-space:nowrap`;
     div.innerText=val;
     div.addEventListener('mousedown',e=>startDrag(e,el.id));
+    div.addEventListener('touchstart',e=>{e.preventDefault();startDrag(e.touches[0],el.id);},{passive:false});
     div.addEventListener('click',()=>selectCdElement(el.id));
     canvas.appendChild(div);
     if(el.id===cdSelectedId) div.style.borderColor='var(--p)';
@@ -2962,7 +3043,10 @@ function stopDrag(){ cdDragging=false; }
 async function saveCardDesign(){
   showLoad();
   await db.from('app_settings').upsert({key:'card_designer',value:JSON.stringify(cdDesign),updated_at:new Date().toISOString()},{onConflict:'key'});
-  hideLoad(); toast('Desain kartu disimpan ke database ✓');
+  hideLoad();
+  logAct('Setting','Desain kartu member diperbarui');
+  syncLoyaltyCardPreview();
+  toast('Desain kartu disimpan ke database ✓');
 }
 
 async function resetCardDesign(){
@@ -3067,7 +3151,49 @@ function loadReceiptSizeView(){
     if(w===lblSet.width && h===lblSet.height) selectLabelSize(w,h,o);
   });
 }
-  
+
+function syncLoyaltyCardPreview(){
+  const bgEl=document.getElementById('loyaltyPreviewBg');
+  const defEl=document.getElementById('loyaltyPreviewDefault');
+  const elemEl=document.getElementById('loyaltyPreviewElements');
+  if(!bgEl) return;
+
+  if(cdDesign.bg){
+    bgEl.src=cdDesign.bg; bgEl.style.display='block';
+    defEl.style.display='none';
+    // Render elemen teks
+    elemEl.style.display='block';
+    const sampleData={
+      name: allCustomers.length>0?(allCustomers[0].name||'').toUpperCase():'NAMA MEMBER',
+      code: allCustomers.length>0?(allCustomers[0].unique_code||'MBR-00000001'):'MBR-00000001',
+      phone: allCustomers.length>0?(allCustomers[0].phone||'—'):'08xx-xxxx-xxxx',
+      points: allCustomers.length>0?`${allCustomers[0].points||0} Poin`:'0 Poin'
+    };
+    elemEl.innerHTML=cdDesign.elements.filter(el=>el.active).map(el=>`
+      <div style="position:absolute;left:${el.x}%;top:${el.y}%;transform:translate(-50%,-50%);
+        font-size:${el.size*0.45}px;color:${el.color};font-weight:${el.bold?'900':'400'};
+        white-space:nowrap;font-family:'DM Sans',sans-serif;pointer-events:none">
+        ${sampleData[el.id]||el.label}
+      </div>`).join('');
+  } else {
+    bgEl.style.display='none'; defEl.style.display='flex'; elemEl.style.display='none';
+  }
+}
+
+  function onCanvasTouchDrag(e){
+  if(!cdDragging||!cdSelectedId) return;
+  e.preventDefault();
+  const touch=e.touches[0];
+  const canvas=document.getElementById('cdCanvas');
+  const cr=canvas.getBoundingClientRect();
+  const x=((touch.clientX-cr.left)/cr.width*100);
+  const y=((touch.clientY-cr.top)/cr.height*100);
+  const el=cdDesign.elements.find(e=>e.id===cdSelectedId); if(!el) return;
+  el.x=Math.max(5,Math.min(95,x));
+  el.y=Math.max(5,Math.min(95,y));
+  const div=document.getElementById('cdEl_'+cdSelectedId);
+  if(div){ div.style.left=el.x+'%'; div.style.top=el.y+'%'; }
+}
 // ===== GENERIC DELETE =====
 async function deleteData(tbl,id,cb){if(!confirm('Hapus permanen? Data tidak bisa dipulihkan.'))return;showLoad();const{error}=await db.from(tbl).delete().eq('id',id);hideLoad();if(error)return toast(error.message,false);toast('Data terhapus');logAct('Hapus',`Hapus dari ${tbl}`);if(typeof cb==='function')cb();}
 </script>
