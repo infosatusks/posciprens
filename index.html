@@ -2,7 +2,7 @@
 <html lang="id">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>Cilegon Petshop</title>
 <link rel="icon" href="logo.png" type="image/png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -158,6 +158,115 @@ input:checked+.slider:before{transform:translateX(18px)}
 #memberProfileScreen{display:none;position:fixed;inset:0;z-index:200;overflow-y:auto;background:#0f0f1a}
 .member-profile-card{background:linear-gradient(135deg,#1a0a12 0%,#2d0f20 50%,#1a0a12 100%);border:1px solid rgba(204,14,116,.3);border-radius:24px;position:relative;overflow:hidden}
 .member-profile-card::before{content:'';position:absolute;inset:0;background-image:radial-gradient(circle at 70% 30%,rgba(204,14,116,.15) 0%,transparent 60%);pointer-events:none}
+
+/* ===== MOBILE FULL FIX ===== */
+@media(max-width:767px){
+  /* Sidebar: sembunyikan sepenuhnya, full height overlay */
+  #sidebar{
+    position:fixed!important;
+    top:0;left:0;
+    height:100vh!important;
+    z-index:40;
+    width:260px!important;
+    transform:translateX(-100%);
+  }
+  #sidebar.collapsed{width:260px!important}
+  #sidebar.collapsed .sb-label,
+  #sidebar.collapsed .sb-section-label,
+  #sidebar.collapsed .sb-logo-text,
+  #sidebar.collapsed #userFooter{display:block!important}
+  #sidebar.collapsed .menu-item{justify-content:flex-start!important;padding:10px 12px!important}
+
+  /* Main content: full width, tidak terpengaruh sidebar */
+  #mainApp{display:flex!important;flex-direction:column!important}
+  #mainApp > aside{flex-shrink:0}
+  #mainApp > .flex-1{width:100vw!important;min-width:0!important;overflow-x:hidden}
+
+  /* Header */
+  header{height:auto!important;min-height:56px;padding:8px 12px!important}
+  header h1{font-size:14px!important;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:50vw}
+
+  /* Main scroll area */
+  #mainContainer{overflow-y:auto!important;overflow-x:hidden!important;-webkit-overflow-scrolling:touch}
+
+  /* Stat cards — 1 kolom di HP kecil */
+  .stat-card{padding:14px 16px!important}
+  .stat-card .text-2xl{font-size:1.2rem!important}
+  .stat-card .text-xl{font-size:1rem!important}
+  .stat-icon{width:40px!important;height:40px!important;font-size:16px!important}
+
+  /* Grid 4 kolom → 2 kolom */
+  .grid.grid-cols-2.lg\:grid-cols-4{grid-template-columns:repeat(2,1fr)!important}
+  /* Grid 3 kolom → 1 kolom */
+  .grid.grid-cols-1.lg\:grid-cols-3{grid-template-columns:1fr!important}
+  .grid.grid-cols-1.lg\:grid-cols-2{grid-template-columns:1fr!important}
+  .grid.grid-cols-3{grid-template-columns:1fr!important}
+
+  /* Padding view section */
+  .view-section{padding:12px!important}
+  .p-5{padding:12px!important}
+  .p-6{padding:14px!important}
+
+  /* Tabel: scroll horizontal */
+  .overflow-x-auto{overflow-x:auto!important;-webkit-overflow-scrolling:touch}
+  .tbl{font-size:12px!important;white-space:nowrap}
+  .tbl thead th{padding:8px 10px!important;font-size:10px!important}
+  .tbl tbody td{padding:8px 10px!important}
+
+  /* Checkout drawer full width */
+  #checkoutDrawer{width:100vw!important}
+
+  /* Modal full width */
+  .modal-wrap{padding:8px!important}
+  .modal-box{border-radius:14px!important;max-height:92vh!important}
+
+  /* Card max-width override */
+  .max-w-lg,.max-w-2xl,.max-w-sm,.max-w-md{max-width:100%!important}
+
+  /* Form elements */
+  .inp{font-size:16px!important} /* Cegah iOS zoom saat focus */
+  select.inp{font-size:16px!important}
+
+  /* Grafik chart lebih kecil */
+  #chartMain{max-height:180px!important}
+
+  /* Range tabs wrap */
+  .range-tab{padding:5px 10px!important;font-size:12px!important}
+
+  /* Page content tidak terpotong */
+  main{padding-bottom:80px!important} /* Ruang untuk demo badge */
+
+  /* Stock opname */
+  #view-stockopname .flex.gap-2{flex-direction:column!important}
+
+  /* Settings grid */
+  #view-loyaltysettings .grid,
+  #view-printsettings .grid,
+  #view-hppsettings .grid,
+  #view-platformsettings .grid{grid-template-columns:1fr!important}
+
+  /* Targets grid */
+  #view-targets .grid{grid-template-columns:1fr!important}
+
+  /* Cash opname grid */
+  #cashSummary,
+  #view-cashopname .grid.grid-cols-3{grid-template-columns:repeat(3,1fr)!important;font-size:12px!important}
+
+  /* Label size options */
+  #labelSizeOptions{grid-template-columns:repeat(3,1fr)!important}
+
+  /* Button overflow */
+  .flex.flex-wrap{flex-wrap:wrap!important}
+  .btn-sm{font-size:12px!important;padding:5px 10px!important}
+}
+
+@media(max-width:400px){
+  /* HP sangat kecil */
+  .grid.grid-cols-2.lg\:grid-cols-4{grid-template-columns:1fr!important}
+  #cashSummary,
+  #view-cashopname .grid.grid-cols-3{grid-template-columns:1fr!important}
+  header h1{max-width:40vw}
+}
 </style>
 </head>
 
@@ -1371,8 +1480,11 @@ function openSidebar(){document.getElementById('sidebar').classList.remove('-tra
 function closeSidebar(){document.getElementById('sidebar').classList.add('-translate-x-full');document.getElementById('sbOverlay').style.display='none';}
 function toggleSidebar(){
   const sb=document.getElementById('sidebar');
-  if(window.innerWidth<768){sb.classList.contains('-translate-x-full')?openSidebar():closeSidebar();}
-  else{sb.classList.toggle('collapsed');}
+  if(window.innerWidth<768){
+    sb.classList.contains('-translate-x-full')?openSidebar():closeSidebar();
+  } else {
+    sb.classList.toggle('collapsed');
+  }
 }
 window.addEventListener('resize',()=>{
   const sb=document.getElementById('sidebar');
@@ -1409,6 +1521,10 @@ function logout(){sessionStorage.removeItem('cp_user');location.reload();}
 async function initApp(){
   document.getElementById('loginScreen').style.display='none';
   document.getElementById('mainApp').style.display='flex';
+  // Mobile: pastikan sidebar tersembunyi saat pertama buka
+  if(window.innerWidth < 768){
+    document.getElementById('sidebar').classList.add('-translate-x-full');
+  }
   document.getElementById('topRole').innerText=currentUser.role;
   document.getElementById('userAvatarSb').innerText=currentUser.username.charAt(0).toUpperCase();
   document.getElementById('usernameSb').innerText=currentUser.username;
