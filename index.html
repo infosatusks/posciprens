@@ -3000,14 +3000,6 @@ const CD_SAMPLE = {name:'BUDI SANTOSO', code:'CPS-00000001', phone:'08123456789'
 async function loadCardDesigner(){
   const {data}=await db.from('app_settings').select('value').eq('key','card_designer').single();
   if(data&&data.value){ try{ cdDesign=JSON.parse(data.value); }catch(e){} }
-  if(cdDesign.bg){
-    document.getElementById('cdBgImg').src=cdDesign.bg;
-    document.getElementById('cdBgImg').style.display='block';
-    document.getElementById('cdBgDefault').style.display='none';
-  }
-  async function loadCardDesigner(){
-  const {data}=await db.from('app_settings').select('value').eq('key','card_designer').single();
-  if(data&&data.value){ try{ cdDesign=JSON.parse(data.value); }catch(e){} }
 
   // Load bg depan
   const bgImg=document.getElementById('cdBgImg');
@@ -3056,24 +3048,6 @@ async function loadCardDesigner(){
 
   cdSelectedId=null;
   document.getElementById('cdEditPanel').classList.add('hidden');
-  renderCdElements();
-  renderCdElementList();
-}
-  if(allCustomers.length>0){
-    document.getElementById('cdBackCode').innerText=allCustomers[0].unique_code||'CPS-00000001';
-  }
-  // Update sample data dengan pelanggan pertama jika ada
-  if(allCustomers.length>0){
-    const c=allCustomers[0];
-    CD_SAMPLE.name=(c.name||'').toUpperCase();
-    CD_SAMPLE.code=c.unique_code||'CPS-00000001';
-    CD_SAMPLE.phone=c.phone||'—';
-    CD_SAMPLE.points=`${c.points||0} Poin`;
-    document.getElementById('cdSampleName').innerText=CD_SAMPLE.name;
-    document.getElementById('cdSampleCode').innerText=CD_SAMPLE.code;
-    document.getElementById('cdSamplePhone').innerText=CD_SAMPLE.phone;
-    document.getElementById('cdSamplePoints').innerText=CD_SAMPLE.points;
-  }
   renderCdElements();
   renderCdElementList();
 }
