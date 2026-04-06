@@ -2369,8 +2369,9 @@ async function voidSaleCrud(id){
 async function loadSalesList(){
   showLoad();const{data}=await db.from('sales').select('*').gte('date',document.getElementById('filterSaleS').value).lte('date',document.getElementById('filterSaleE').value).order('created_at',{ascending:false});hideLoad();
   if(data)document.getElementById('tbSalesList').innerHTML=data.map(s=>`<tr><td class="font-mono text-xs text-gray-500">${s.id}</td><td class="text-sm">${s.date}</td><td class="font-bold">${s.buyer_name}</td><td class="text-sm text-gray-500">${s.source||'Langsung'}</td><td class="text-right font-bold text-green-600">${fRp(s.total_payment)}</td><td class="text-center"><button onclick="openEditSale('${s.id}')" class="btn btn-xs mr-1" style="background:#eff6ff;color:#3b82f6"><i class="fas fa-edit"></i></button><button onclick="openReturnModal('${s.id}')" class="btn btn-xs mr-1" style="background:#f0fdf4;color:#16a34a" title="Retur"><i class="fas fa-undo-alt"></i></button>
-      <button onclick="voidSale('${s.id}')" class="btn btn-xs btn-danger"><i class="fas fa-ban"></i></button></td></tr>`).join('');let gt=0;data.forEach(s=>gt+=Number(s.total_payment));document.getElementById('tbSalesList').innerHTML+=`<tr style="background:#f9fafb;font-weight:800;border-top:2px solid var(--border)"><td colspan="4" class="text-right py-3 text-sm">TOTAL (${data.length} transaksi)</td><td class="text-right py-3 text-green-700">${fRp(gt)}</td><td></td></tr>`;}
+      <button onclick="voidSale('${s.id}')" class="btn btn-xs btn-danger"><i class="fas fa-ban"></i></button></td></tr>`).join('');let gt=0;data.forEach(s=>gt+=Number(s.total_payment));document.getElementById('tbSalesList').innerHTML+=`<tr style="background:#f9fafb;font-weight:800;border-top:2px solid var(--border)"><td colspan="4" class="text-right py-3 text-sm">TOTAL (${data.length} transaksi)</td><td class="text-right py-3 text-green-700">${fRp(gt)}</td><td></td></tr>`;
 }
+
 async function openEditSale(id){
   const{data:s}=await db.from('sales').select('*').eq('id',id).single();
   if(!s)return alert('Transaksi tidak ditemukan');
